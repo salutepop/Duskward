@@ -1,181 +1,729 @@
 {
-  "version": "2.0",
-  "atlas": "characters_atlas_v2.png",
-  "tile_size": 64,
-  "sprites_dir": "sprites",
-  "items_dir": "items",
+  "version": 1,
+  "project": "Duskward",
+  "attribution": "Original artwork generated with OpenAI GPT Image built-in tool for this project. No third-party character, logo, screenshot, or franchise reference used.",
   "assets": [
     {
-      "file": "characters_atlas_v2.png",
+      "file": "characters_atlas_v1.png",
+      "source_image_path": "/workspace/scratch/056d7c6d3844/generated_images/exec-46caa816-1458-498e-b51f-717bed08cae8.png",
       "type": "sprite_atlas",
-      "grid": [
-        4,
-        4
-      ],
-      "tile_size": 64,
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "nominal_grid": {
+        "columns": 4,
+        "rows": 3
+      },
       "regions": [
         {
           "id": "guardian",
           "rect": [
-            0,
-            0,
-            64,
-            64
-          ]
+            15,
+            27,
+            355,
+            296
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "ranger",
           "rect": [
-            64,
-            0,
-            64,
-            64
-          ]
+            454,
+            33,
+            282,
+            300
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "arcanist",
           "rect": [
-            128,
-            0,
-            64,
-            64
-          ]
-        },
-        {
-          "id": "ghost",
-          "rect": [
-            192,
-            0,
-            64,
-            64
-          ]
-        },
-        {
-          "id": "crypt_lord",
-          "rect": [
-            0,
-            64,
-            64,
-            64
-          ]
-        },
-        {
-          "id": "samurai",
-          "rect": [
-            64,
-            64,
-            64,
-            64
-          ]
+            813,
+            5,
+            284,
+            327
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "crawler",
           "rect": [
-            128,
-            64,
-            64,
-            64
-          ]
+            1212,
+            75,
+            251,
+            231
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "skirmisher",
           "rect": [
-            192,
-            64,
-            64,
-            64
-          ]
+            51,
+            347,
+            317,
+            252
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "shooter",
           "rect": [
-            0,
-            128,
-            64,
-            64
-          ]
+            454,
+            360,
+            294,
+            266
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "guard",
           "rect": [
-            64,
-            128,
-            64,
-            64
-          ]
+            789,
+            341,
+            356,
+            308
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "siege",
           "rect": [
-            128,
-            128,
-            64,
-            64
-          ]
+            1227,
+            321,
+            285,
+            334
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
           "id": "boss",
           "rect": [
-            192,
-            128,
-            64,
-            64
-          ]
+            11,
+            599,
+            416,
+            419
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
         },
         {
-          "id": "elite",
+          "id": "castle",
           "rect": [
+            437,
+            624,
+            363,
+            375
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
+        },
+        {
+          "id": "portal",
+          "rect": [
+            846,
+            627,
+            313,
+            375
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
+        },
+        {
+          "id": "chest",
+          "rect": [
+            1232,
+            718,
+            259,
+            255
+          ],
+          "pivot": [
+            0.5,
+            0.82
+          ],
+          "layout": "measured_object_rectangle"
+        }
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: production game sprite atlas for an original top-down 2D fantasy hero-defense Android game named Duskward, not a poster or concept sheet.\nPrimary request: create exactly twelve isolated full-body game sprites on a genuinely transparent RGBA canvas, arranged in a perfectly regular 4-column by 3-row atlas. Canvas 1536 x 1024 pixels. Each logical cell is 384 pixels wide and about 341 pixels high. No visible grid lines or cell frames. Center each entire object within its own cell, with at least 45 pixels of transparent padding on each side. Nothing crosses a cell boundary.\nStyle: premium hand-painted fantasy miniatures with crisp chunky silhouettes, controlled broad color shapes, restrained detail, subtly outlined edges. All seen from the same elevated 3/4 top-down game camera, not ground-level portrait perspective. Character heads visible from above. Static standing/ready pose facing diagonally toward bottom-left. No ground disks, no cast shadows, no floor, no scenery, no text, labels, numbers, borders, watermarks or logos. Weapons fully contained and legible at 64-pixel in-game height.\nColor direction: allied heroes slate-steel and warm brass with small pale-cyan accents; enemies charcoal leather/iron with coral-red and muted violet accents. Muted sophisticated palette, not glowing neon.\nExact layout row-major:\nRow 1 column 1: guardian hero, broad steel-armored human with squared brass-trimmed shield and short wide sword, pale cyan shoulder cape.\nRow 1 column 2: ranger hero, agile human with teal hood and leather armor, elegant compact longbow, brass quiver.\nRow 1 column 3: caster hero, human in midnight-teal robes with ivory shoulder mantle, tall staff ending in three small cyan crystal prongs.\nRow 1 column 4: crawler enemy, small dark-red many-legged armored beetle creature, low wide body.\nRow 2 column 1: skirmisher enemy, lean masked raider with twin short hooked blades and a torn crimson scarf.\nRow 2 column 2: shooter enemy, squat masked crossbow raider in charcoal leather and violet hood, oversized readable crossbow.\nRow 2 column 3: guard enemy, bulky iron-armored brute with a large angular crimson shield and mace.\nRow 2 column 4: siege enemy, compact wooden and dark iron wheeled bolt-thrower siege engine with small red pennant.\nRow 3 column 1: boss enemy, imposing original obsidian-armored hornless warlord with a giant cleaver and a ring-shaped cracked crimson crystal mounted behind shoulders; unique silhouette, no known franchise resemblance.\nRow 3 column 2: friendly castle core, compact circular slate-stone keep with four squat crenellated towers and an illuminated pale-cyan core, warm brass trim, top-down three-quarter view.\nRow 3 column 3: enemy portal, irregular dark stone arch framing a small red-violet glowing aperture, entirely isolated, no floor.\nRow 3 column 4: reward chest, stout dark-wood chest with brass straps and a small cyan gem, closed lid.\nMake all character sprites visually similar scale except boss somewhat larger. Castle fills about 75% of its tile. Preserve empty transparent gutters, never add any decoration outside the twelve objects. Original artwork only.",
+      "validation": {
+        "alpha_zero_fraction": 0.5579433441162109,
+        "alpha_high_fraction": 0.36197535196940106,
+        "notes": "Visually inspected full atlas and analyzed alpha. Generator did not preserve uniform gutters: use measured object rectangles, never nominal-grid slicing. Background RGB is nonzero under alpha 0, as allowed in RGBA. GPU must honor alpha. Static ready poses; no animation frames. Skirmisher lower edge and boss top gem touch adjacent logical rows, so their regions use exact y=599 split."
+      },
+      "sha256": "f2ed6e6b003a6a6ef75959e4ed15d8931cf7dd884867211bcaec56f762bd873c"
+    },
+    {
+      "file": "battlefield_v1.png",
+      "source_image_path": "/workspace/scratch/056d7c6d3844/generated_images/exec-d3073512-5eb3-4055-847f-d9ae98d5a251.png",
+      "type": "battlefield_background",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "transparent_background": false,
+      "prompt": "Use case: stylized-concept.\nAsset type: playable battlefield terrain background, 16:9 landscape, for an original 2D top-down fantasy hero-defense Android game Duskward.\nPrimary request: create a polished hand-painted TOP-DOWN GAME MAP seen from a fixed orthographic overhead camera. Canvas 1536 x 864 pixels. This is gameplay terrain, not a scenic horizon illustration. No sky, horizon, close-up objects, perspective vanishing point, foreground framing, UI, writing, labels or characters.\nGameplay geometry: broad horizontal open battlefield, friendly base zone on left at 8% width and 50% height, enemies enter from the right at 96% width and three lanes around 35%,50%,65% height. Three subtle worn stone-and-earth lanes curve from the right and meet in a generous open left-center courtyard. All lanes must be wide, flat, empty, and traversable. Leave a circular empty slate-stone foundation in the left base zone for a separately rendered small castle. DO NOT draw the castle, towers, portals, units, weapons, loot, banners or any large focal object.\nComposition: playable central 74% of height mostly low-contrast muted mossy green grass and warm weathered stone paving with understated path edges. Top 14% and bottom 25% are quiet darker low-detail areas where translucent HUD and touch controls will sit. Scatter sparse small tufts, flat rocks and worn stone seams at outer edges, never densely fill the fighting lanes. Narrow dark woodland suggestions only at the extreme top and bottom edges, not blocking the central field. Two small broken wall fragments may sit far in the top corners, not at the base center or on lanes.\nStyle: sophisticated crisp hand-painted fantasy game ground textures with broad readable shapes, like a lovingly painted tabletop map. Consistent overhead view. Slate gray stone, muted olive and moss, desaturated earth, faint cool blue ambient tint, restrained warm light at the left foundation. Soft even twilight lighting, no bright magic effects, no fog obscuring gameplay. Low to medium contrast so bright allied cyan and hostile coral-red sprites remain readable.\nConstraints: original artwork only, no resemblance to any franchise map, no logos, no watermark, no text, no grid. Crucially keep the center empty and visually quiet; this is an actual gameplay background.",
+      "validation": {
+        "notes": "Visually inspected. Generated 1672x941, near 16:9, rather than requested 1536x864. Left empty circular base foundation and three open converging right-side lanes; no castle or units baked in. Actual foundation center approximately (148,424), normalized(0.0885,0.4506). Render background into battlefield/world rect; sprites can overlay it. Decorative scenery is not collision geometry."
+      },
+      "sha256": "d05bbb3f72e17788fa32773612cf9a3041079ac309f08eb24b848952b0d4f5b9"
+    },
+    {
+      "file": "items_atlas_v1.png",
+      "source_image_path": "/workspace/scratch/056d7c6d3844/generated_images/exec-e783cca4-4c75-426c-8ac0-94df9ae756d1.png",
+      "type": "item_icon_atlas",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "nominal_grid": {
+        "columns": 6,
+        "rows": 4,
+        "cell_width": 256,
+        "cell_height": 256
+      },
+      "regions": [
+        {
+          "id": "iron_blade",
+          "rect": [
+            38,
+            37,
+            199,
+            208
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
             0,
-            192,
-            64,
-            64
+            0,
+            256,
+            256
           ]
         },
         {
-          "id": "healer",
+          "id": "focus_stone",
           "rect": [
-            64,
-            192,
-            64,
-            64
+            309,
+            37,
+            142,
+            206
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            256,
+            0,
+            256,
+            256
           ]
         },
         {
-          "id": "summoner",
+          "id": "armor_plate",
           "rect": [
-            128,
-            192,
-            64,
-            64
+            543,
+            47,
+            189,
+            201
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            512,
+            0,
+            256,
+            256
           ]
         },
         {
-          "id": "flyer",
+          "id": "spring_gear",
           "rect": [
-            192,
-            192,
-            64,
-            64
+            803,
+            40,
+            191,
+            202
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            768,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "ward_cloth",
+          "rect": [
+            1043,
+            53,
+            226,
+            190
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1024,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "keen_lens",
+          "rect": [
+            1303,
+            34,
+            204,
+            211
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1280,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "energy_cell",
+          "rect": [
+            49,
+            282,
+            160,
+            213
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            0,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "guard_seal",
+          "rect": [
+            304,
+            275,
+            163,
+            222
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            256,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "storm_blade",
+          "rect": [
+            525,
+            272,
+            220,
+            233
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            512,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "guard_armor",
+          "rect": [
+            780,
+            276,
+            233,
+            228
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            768,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "focuser",
+          "rect": [
+            1071,
+            276,
+            171,
+            222
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1024,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "swift_bow",
+          "rect": [
+            1301,
+            271,
+            208,
+            227
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1280,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "crit_scope",
+          "rect": [
+            31,
+            545,
+            209,
+            178
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            0,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "ward_mantle",
+          "rect": [
+            276,
+            530,
+            222,
+            210
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            256,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "reservoir",
+          "rect": [
+            556,
+            514,
+            161,
+            231
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            512,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "blood_edge",
+          "rect": [
+            791,
+            527,
+            203,
+            216
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            768,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "iron_ring",
+          "rect": [
+            1064,
+            553,
+            189,
+            170
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1024,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "tempest_glaive",
+          "rect": [
+            1289,
+            500,
+            225,
+            249
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1280,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "fortress",
+          "rect": [
+            38,
+            762,
+            196,
+            225
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            0,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "star_core",
+          "rect": [
+            284,
+            761,
+            209,
+            236
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            256,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "falcon_eye",
+          "rect": [
+            564,
+            765,
+            166,
+            226
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            512,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "sanctuary",
+          "rect": [
+            816,
+            757,
+            161,
+            232
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            768,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "sanguine",
+          "rect": [
+            1031,
+            756,
+            231,
+            245
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1024,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "id": "healing_potion",
+          "rect": [
+            1322,
+            765,
+            173,
+            221
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "layout": "measured_object_rectangle",
+          "nominal_cell": [
+            1280,
+            768,
+            256,
+            256
           ]
         }
-      ]
-    },
-    {
-      "file": "battlefield_v2.png",
-      "type": "background",
-      "size": [
-        1600,
-        640
-      ]
-    },
-    {
-      "file": "tileset_v1.png",
-      "type": "tileset",
-      "grid": [
-        4,
-        4
       ],
-      "tile_size": 32
+      "prompt": "Use case: stylized-concept.\nAsset type: production inventory item icon atlas for original 2D fantasy hero-defense Android game Duskward.\nPrimary request: exactly 24 isolated fantasy equipment icons on a genuinely transparent RGBA canvas, perfectly regular SIX COLUMNS by FOUR ROWS, landscape canvas1536x1024, exactly256x256 logical cells. One item centered in each cell. Every icon entirely inside the central176x176 pixels of its cell, leaving40px completely transparent gutters on every side. No cells may overlap. NO item cards, circular disks, frames, backgrounds, gradient backplates, labels, letters, numbers, grid lines, signatures or watermark. Use actual alpha transparency.\nStyle: readable hand-painted fantasy inventory objects, chunky clean silhouettes, dark edge definition, brass and slate-metal with restrained jewel glows. Orthographic three-quarter object view. Consistent upper-left light, high material clarity but not photorealistic. Icon surfaces solid and opaque, surrounding empty canvas fully alpha0. No floor or cast shadow. Items must remain identifiable at48px; exaggerated core silhouette, minimal tiny details.\nExact row-major layout:\nROW1: (1) plain iron short sword blade; (2) faceted cyan focus crystal; (3) single thick steel breastplate plate; (4) brass clockwork spring gear; (5) folded violet ward cloth; (6) brass-rimmed magnifying lens with clear blue glass.\nROW2: (1) cylindrical cyan energy cell in brass holder; (2) shield-shaped steel guardian seal amulet; (3) storm sword with silver blade and two restrained blue lightning arcs; (4) complete sturdy brass-trimmed steel guardian cuirass; (5) arcane focusing device with three brass prongs around cyan crystal; (6) graceful compact recurved swift bow of dark wood and brass.\nROW3: (1) compact brass critical-aim telescope with ruby lens; (2) folded violet cloak with silver clasp; (3) large reservoir canister holding cyan magical liquid with brass caps; (4) curved crimson-edged vampiric dagger, no blood or gore; (5) heavy iron signet ring with blue shield emblem; (6) elegant storm glaive polearm with pale-cyan crescent blade.\nROW4: (1) fortress heart relic, miniature slate-stone battlement around gold heart-shaped core; (2) star core relic, faceted deep-blue sphere inside an open golden armillary ring; (3) falcon eye relic, gold falcon-shaped amulet with ruby eye; (4) sanctuary relic, rounded ivory kite shield with subtle cyan protective crystal; (5) sanguine relic, wide scarlet sword bound with a curved gold oath ring, no blood or gore; (6) healing potion in a squat round ruby-red glass vial with cork and brass neck.\nExact count24, no additional objects. Do not combine adjacent cells. Maintain strict256px grid and broad gutters. Original assets only, no known franchise symbols.",
+      "validation": {
+        "alpha_zero_fraction": 0.6133632659912109,
+        "alpha_high_fraction": 0.2984962463378906,
+        "notes": "Visually inspected. Exactly24 intended icons present in correct order. Generator slightly crossed row boundaries for glaive and fourth-row items, so use measured rectangles rather than fixed256px slicing. Bounding boxes measured from alpha>48 connected components and padded4px; low-opacity effects may extend farther. All major object bodies and silhouettes preserved. Render fitting aspect ratio inside an icon square."
+      },
+      "sha256": "3af453a8420f2a5cfa2bddd669814805c48ba91b6d46cf0addb5e55980849be3"
+    },
+    {
+      "file": "app_icon_v1.png",
+      "source_image_path": "/workspace/scratch/056d7c6d3844/generated_images/exec-e9f053c2-db16-4eb3-b0f6-65cecb00845d.png",
+      "type": "android_app_icon",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "transparent_background": false,
+      "prompt": "Use case: stylized-concept.\nAsset type: Android launcher app icon for original top-down fantasy hero-defense game Duskward.\nPrimary request: a SINGLE beautifully finished square game app icon, 1024x1024 pixels, opaque background. A bold compact slate-stone fortress with three strong crenellated towers protects a luminous faceted cyan crystal. Original design, not a recognizable franchise icon. No letters, words, monogram, title, numbers, watermark, UI, shield border or frame.\nComposition: perfectly centered iconic silhouette, all essential castle and crystal details entirely inside the middle 62% of the square so circular, rounded-square and squircle Android adaptive masks never clip the subject. View fortress from elevated three-quarter angle. Low broad fortress walls, solid silhouette; a large bright cyan crystal rising from its heart is the dominant readable shape. Three or four broad crystal facets, simplified tower crenellations, warm brass edging as restrained secondary accent. No tiny flags or fiddly details. Clear at48px.\nStyle: premium crisp hand-painted fantasy game art, sculptural chunky forms, polished readable edges, controlled broad color regions. Matching palette of dark slate steel, warm brass, luminous pale-cyan. Strong value contrast. Cyan crystal brightest at center, no large glow washing out silhouette.\nBackground: deep midnight-teal and navy square with subtle soft radial illumination directly behind the crystal. No other scenery. Opaque fullbleed background, no transparent corners and no baked rounded corners. Elegant high-contrast original game icon, not a realistic landscape.",
+      "validation": {
+        "notes": "Visually inspected centered cyan crystal fortress. Actual generated size1254x1254, not requested1024. Full-bleed opaque navy square, no baked corner rounding or text. Subject is larger than requested central62% but essential crystal and gate remain centered and the full silhouette fits approximately inside the image's inscribed circle. Use as ordinary launcher icon. If creating adaptive foreground layers, normal export pipeline should provide additional safe-zone inset; do not claim a pre-separated adaptive layer."
+      },
+      "sha256": "fe477a7548b4acdb1d7ea8022b23d6283a8548268f51dffeb21316ebc8b2fef5"
     }
   ]
 }

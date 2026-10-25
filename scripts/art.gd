@@ -8,18 +8,11 @@ var item_atlas: Texture2D
 var item_regions: Dictionary = {}
 
 func _init() -> void:
-	# Prefer v2 War3/Diablo2-inspired assets
-	if ResourceLoader.exists("res://assets/art/characters_atlas_v2.png"):
-		atlas = load("res://assets/art/characters_atlas_v2.png") as Texture2D
-	elif ResourceLoader.exists("res://assets/art/characters_atlas_v1.png"):
+	if ResourceLoader.exists("res://assets/art/characters_atlas_v1.png"):
 		atlas = load("res://assets/art/characters_atlas_v1.png") as Texture2D
-	if ResourceLoader.exists("res://assets/art/battlefield_v2.png"):
-		background = load("res://assets/art/battlefield_v2.png") as Texture2D
-	elif ResourceLoader.exists("res://assets/art/battlefield_v1.png"):
+	if ResourceLoader.exists("res://assets/art/battlefield_v1.png"):
 		background = load("res://assets/art/battlefield_v1.png") as Texture2D
-	if ResourceLoader.exists("res://assets/art/items_atlas_v2.png"):
-		item_atlas = load("res://assets/art/items_atlas_v2.png") as Texture2D
-	elif ResourceLoader.exists("res://assets/art/items_atlas_v1.png"):
+	if ResourceLoader.exists("res://assets/art/items_atlas_v1.png"):
 		item_atlas = load("res://assets/art/items_atlas_v1.png") as Texture2D
 	if FileAccess.file_exists("res://assets/art/manifest.json"):
 		var manifest = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art/manifest.json"))
@@ -130,7 +123,7 @@ func hero(c: CanvasItem, at: Vector2, id: String, facing: Vector2, t: float, sca
 	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
 	if sprite(c,id,at+Vector2(0,bob),59*scale,facing.x>0,Color(1,1,1,opacity)):
 		return
-	var col: Color = {"guardian":Color("62b9b9"),"ranger":Color("94b779"),"arcanist":Color("b99cda"),"ghost":Color("b0b0c0"),"crypt_lord":Color("a05050"),"samurai":Color("708090")}.get(id,Color.WHITE)
+	var col: Color = {"guardian":Color("62b9b9"),"ranger":Color("94b779"),"arcanist":Color("b99cda")}.get(id,Color.WHITE)
 	col.a *= opacity
 	c.draw_circle(at+Vector2(0,-23)*scale,10*scale,col)
 	c.draw_rect(Rect2(at+Vector2(-11,-20)*scale,Vector2(22,25)*scale),col.darkened(0.3))
@@ -152,9 +145,6 @@ func enemy(c: CanvasItem, at: Vector2, kind: String, t: float, attacking: bool, 
 		return
 	c.draw_circle(at+Vector2(0,-10),14,Color("984b4f",alpha))
 	c.draw_line(at+Vector2(-14,-15),at+Vector2(14,-15),Color("e5a179",alpha),3,true)
-	var enemy_col: Color = {"elite":Color("ffd700"),"healer":Color("50c878"),"summoner":Color("9370db"),"flyer":Color("87ceeb")}.get(kind,Color("984b4f"))
-	c.draw_circle(at+Vector2(0,-10),14,enemy_col.darkened(0.3)*alpha)
-	c.draw_line(at+Vector2(-14,-15),at+Vector2(14,-15),enemy_col.lightened(0.2)*alpha,3,true)
 
 func _arrow(c: CanvasItem, start: Vector2, end: Vector2, color: Color, width: float=3.0) -> void:
 	var d: Vector2 = (end-start).normalized()

@@ -1573,7 +1573,7 @@ func _trigger_kill_arena() -> void:
 func _trigger_special_event() -> void:
 	phase = "SpecialEvent"
 	special_event = {"active":true,"enemies_spawned":0,"max_enemies":20,"timer":0.0,"duration":45.0}
-	announce("SPECIAL EVENT  •  Bonus arena! Kill all enemies for extra rewards!")
+	announce("SPECIAL EVENT - Bonus arena! Kill all enemies for extra rewards!")
 	log_event("special_event_start",{"wave":completed_wave})
 	for i in 8:
 		spawn_enemy("crawler",_spawn_position(),false)
