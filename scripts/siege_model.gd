@@ -578,6 +578,18 @@ func _resolve_deaths():
 				metrics.hero_lane_xp += reward_xp
 			metrics.kills += 1
 			_update_level()
+			# 아이템 드롭 (20% 확률)
+			if rng.randf() < 0.2:
+				var drop_tier = 1 if rng.randf() < 0.7 else (2 if rng.randf() < 0.9 else 3)
+				var tier_items = []
+				for id in items:
+					if items[id].get("tier",0) == drop_tier and id != "healing_potion":
+						tier_items.append(id)
+				if not tier_items.is_empty():
+					var drop_id = tier_items[rng.randi() % tier_items.size()]
+					if not inventory.has(drop_id) and inventory.size() < 6:
+						inventory.append(drop_id)
+						announce("ITEM DROP: " + drop_id)
 	enemies = alive
 
 func cast(slot: String, aim: Vector2 = Vector2.ZERO) -> bool:
