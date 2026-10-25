@@ -266,6 +266,9 @@ func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: 
 	e.reward = reward
 	e.retreated = false
 	e.flash = 0.0
+	e.hidden = false
+	if kind in ["crawler","skirmisher"] and rng.randf() < 0.15:
+		e.hidden = true
 	enemies.append(e)
 	return e
 
