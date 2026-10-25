@@ -38,8 +38,8 @@
     "min_castle_ratio": 0.35,
     "activation_radius": 2.5,
     "position": [
-      28.0,
-      6.0
+      48.0,
+      12.0
     ],
     "enemy_counts": {
       "crawler": 3,

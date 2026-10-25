@@ -2,8 +2,8 @@ class_name SiegeModel
 extends RefCounted
 ## Authoritative offline solo simulation. Presentation has no combat authority.
 ## Coordinates use meters; callers advance at 30 Hz. RNG is explicitly seeded.
-const CASTLE = Vector2(4, 12)
-const START = Vector2(9, 12)
+const CASTLE = Vector2(8, 24)
+const START = Vector2(16, 24)
 const SAVE_PATH = "user://emberwatch_checkpoint.json"
 const BUILD = "0.3.0"
 const SAVE_SCHEMA = 4
@@ -226,7 +226,7 @@ func start_next_wave() -> bool:
 	spawn_was_capped = false
 	if ruleset=="fast":
 		for i in mini(int(tempo.initial_spawn_count),spawn_queue.size()):
-			spawn_enemy(spawn_queue.pop_front(),Vector2(46,spawn_rng.randf_range(8,16)))
+			spawn_enemy(spawn_queue.pop_front(),Vector2(92,spawn_rng.randf_range(8,40)))
 		spawn_timer = float(tempo.spawn_interval_seconds)
 	announce("WAVE %d  •  %d invaders incoming" % [wave,spawn_queue.size()+enemies.size()])
 	log_event("wave_start",{"wave":wave,"base_hp":base_hp})
@@ -324,7 +324,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 			spawn_timer = 0.0
 			spawn_was_capped = true
 		elif spawn_timer<=due_epsilon and enemies.size()<60:
-			spawn_enemy(spawn_queue.pop_front(),Vector2(46,spawn_rng.randf_range(8,16)))
+			spawn_enemy(spawn_queue.pop_front(),Vector2(92,spawn_rng.randf_range(8,40)))
 			if ruleset=="fast":
 				var interval: float = float(tempo.spawn_interval_seconds)
 				spawn_timer = interval if spawn_was_capped else spawn_timer+interval
@@ -373,7 +373,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 		_clear_wave()
 
 func clamp_position(p: Vector2) -> Vector2:
-	return Vector2(clampf(p.x,2,47),clampf(p.y,2,22))
+	return Vector2(clampf(p.x,2,94),clampf(p.y,2,46))
 
 func _clear_wave():
 	if completed_wave >= wave: return

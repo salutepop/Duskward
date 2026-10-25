@@ -401,7 +401,7 @@ func _movement() -> Vector2:
 		keyboard += Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
 	var screen_direction: Vector2 = joystick if joystick.length() > 0.05 else keyboard.limit_length()
 	# Inverse project input so a diagonal stick points where the hero actually travels.
-	var inverse_projected: Vector2 = Vector2(screen_direction.x,screen_direction.y*(MAP.size.x/48.0)/(MAP.size.y/24.0))
+	var inverse_projected: Vector2 = Vector2(screen_direction.x,screen_direction.y*(MAP.size.x/96.0)/(MAP.size.y/48.0))
 	return inverse_projected.normalized()*minf(1.0,screen_direction.length())
 
 func _input(event: InputEvent) -> void:
@@ -536,7 +536,7 @@ func _skill_target() -> Vector2:
 	var delta: Vector2 = Vector2(skill_pointer.position)-Vector2(skill_pointer.origin)
 	var reach: float = _aim_range(str(skill_pointer.slot))
 	if delta.length()<16 or reach==0: return Vector2.ZERO
-	var direction: Vector2 = Vector2(delta.x,delta.y*(MAP.size.x/48.0)/(MAP.size.y/24.0)).normalized()
+	var direction: Vector2 = Vector2(delta.x,delta.y*(MAP.size.x/96.0)/(MAP.size.y/48.0)).normalized()
 	var directional: bool = model.hero_id+"."+str(skill_pointer.slot) in ["guardian.Q","ranger.Q","ranger.E"]
 	var distance: float = reach if directional else reach*clampf(delta.length()/85.0,0,1)
 	return model.pos+direction*distance
@@ -802,7 +802,7 @@ func _reason(reason: String) -> String:
 	return reason
 
 func _world(p: Vector2) -> Vector2:
-	return MAP.position + Vector2(p.x / 48.0 * MAP.size.x, p.y / 24.0 * MAP.size.y)
+	return MAP.position + Vector2(p.x / 96.0 * MAP.size.x, p.y / 48.0 * MAP.size.y)
 
 func _draw() -> void:
 	ui_paint=Vector3.ONE
@@ -862,12 +862,12 @@ func _occlusion_regions() -> Array[Dictionary]:
 		if float(enemy.get("telegraph",0))>0:
 			result.append({"rect":Rect2(_world(enemy.pos)+Vector2(-10,-55),Vector2(20,20)),"source":"enemy_warning"})
 			var locked: Vector2 = _world(Vector2(enemy.get("attack_pos",model.pos)))
-			var radius: float = (0.8 if str(enemy.kind) in ["siege","shooter"] else 1.8)*MAP.size.x/48.0
+			var radius: float = (0.8 if str(enemy.kind) in ["siege","shooter"] else 1.8)*MAP.size.x/96.0
 			result.append({"rect":Rect2(locked-Vector2.ONE*radius,Vector2.ONE*radius*2).grow(3),"source":"enemy_warning"})
 			if str(enemy.kind) in ["siege","shooter"]:
 				result.append({"rect":Rect2(_world(enemy.pos),Vector2.ZERO).expand(locked).grow(4),"source":"enemy_warning"})
 	for hazard in model.hazards:
-		var radius: float = float(hazard.radius)*MAP.size.x/48.0
+		var radius: float = float(hazard.radius)*MAP.size.x/96.0
 		result.append({"rect":Rect2(_world(hazard.pos)-Vector2.ONE*radius,Vector2.ONE*radius*2).grow(3),"source":"hazard"})
 	if model.boss_pattern_left>0 and model.boss_pattern=="smash":
 		var origin: Vector2 = Vector2(model.boss_pattern_data.pos)
@@ -880,7 +880,7 @@ func _occlusion_regions() -> Array[Dictionary]:
 		var point: Vector2 = Vector2(shot.pos)
 		# Current/past trail plus100ms directional lookahead avoids a point blink.
 		var bounds: Rect2 = Rect2(_world(point),Vector2.ZERO).expand(_world(Vector2(shot.get("previous",point))))
-		bounds=bounds.expand(_world(point+Vector2(shot.get("velocity",Vector2.ZERO))*0.1)).grow(maxf(20,float(shot.get("radius",0.3))*MAP.size.x/48.0))
+		bounds=bounds.expand(_world(point+Vector2(shot.get("velocity",Vector2.ZERO))*0.1)).grow(maxf(20,float(shot.get("radius",0.3))*MAP.size.x/96.0))
 		result.append({"rect":bounds,"source":"hostile_projectile"})
 	return result
 
