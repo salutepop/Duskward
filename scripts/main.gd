@@ -1306,6 +1306,12 @@ func _draw_defenders() -> void:
 		else:
 			_panel(Rect2(p+Vector2(-38,-41),Vector2(76,25)),Color(0.04,0.06,0.05,0.92),LINE,2)
 			_label(_t("defender.respawn",{"seconds":int(ceilf(float(defender.respawn_left)))}),p+Vector2(0,-22),17,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+	for ally in model.allies:
+		var p: Vector2 = _world(ally.pos)
+		var alive: bool = float(ally.hp)>0 and float(ally.respawn_left)<=0
+		art.hero(self,p,ally.hero,Vector2.RIGHT,time,0.8,false,1.0)
+		if alive:
+			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
 func _notice_text(notice: String) -> String:
 	var key: String = copy.notice_key(notice)
