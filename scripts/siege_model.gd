@@ -946,6 +946,10 @@ func _step_boss(dt: float):
 		boss_add_timer = 3
 		for i in 4: spawn_enemy("crawler",clamp_position(b.pos+Vector2(3,i*1.5-2.25)),false)
 		announce("The breaker calls reinforcements!")
+	# Boss phase 2: spawn elite at 30% HP
+	if b.hp <= b.max_hp*0.3 and not boss_thresholds.has(0.1):
+		boss_thresholds.append(0.1)
+		spawn_enemy("elite",clamp_position(b.pos+Vector2(-3,0)),false)
 	if boss_pattern!="":
 		boss_pattern_left -= dt
 		if boss_pattern=="cannon" and not _has_kind("weakness"):
