@@ -23,7 +23,7 @@
   "heroes": [
     {
       "id": "guardian",
-      "name_ko": "성벽 수호자",
+      "name_ko": "\uc131\ubcbd \uc218\ud638\uc790",
       "base": {
         "max_hp": 900,
         "ad": 40,
@@ -48,7 +48,7 @@
     },
     {
       "id": "ranger",
-      "name_ko": "관통 사수",
+      "name_ko": "\uad00\ud1b5 \uc0ac\uc218",
       "base": {
         "max_hp": 650,
         "ad": 32,
@@ -75,7 +75,7 @@
     },
     {
       "id": "arcanist",
-      "name_ko": "조율 술사",
+      "name_ko": "\uc870\uc728 \uc220\uc0ac",
       "base": {
         "max_hp": 620,
         "ad": 24,
@@ -402,6 +402,17 @@
       "armor": 0,
       "magic_resist": 0,
       "castle_multiplier": 1
+    },
+    {
+      "id": "healer",
+      "cost": 3,
+      "hp": 150,
+      "damage": 0,
+      "interval": 2.0,
+      "speed": 1.8,
+      "armor": 0,
+      "magic_resist": 0,
+      "castle_multiplier": 0.35
     }
   ],
   "waves": [
@@ -678,7 +689,7 @@
   "items": [
     {
       "id": "iron_blade",
-      "name_ko": "철제 날",
+      "name_ko": "\ucca0\uc81c \ub0a0",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -695,7 +706,7 @@
     },
     {
       "id": "focus_stone",
-      "name_ko": "초점석",
+      "name_ko": "\ucd08\uc810\uc11d",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -712,7 +723,7 @@
     },
     {
       "id": "armor_plate",
-      "name_ko": "방호판",
+      "name_ko": "\ubc29\ud638\ud310",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -729,7 +740,7 @@
     },
     {
       "id": "spring_gear",
-      "name_ko": "가속 톱니",
+      "name_ko": "\uac00\uc18d \ud1b1\ub2c8",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -746,7 +757,7 @@
     },
     {
       "id": "ward_cloth",
-      "name_ko": "내성 천",
+      "name_ko": "\ub0b4\uc131 \ucc9c",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -763,7 +774,7 @@
     },
     {
       "id": "keen_lens",
-      "name_ko": "예리한 렌즈",
+      "name_ko": "\uc608\ub9ac\ud55c \ub80c\uc988",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -780,7 +791,7 @@
     },
     {
       "id": "energy_cell",
-      "name_ko": "에너지 셀",
+      "name_ko": "\uc5d0\ub108\uc9c0 \uc140",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -797,7 +808,7 @@
     },
     {
       "id": "guard_seal",
-      "name_ko": "수호 인장",
+      "name_ko": "\uc218\ud638 \uc778\uc7a5",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -814,7 +825,7 @@
     },
     {
       "id": "storm_blade",
-      "name_ko": "폭풍 검",
+      "name_ko": "\ud3ed\ud48d \uac80",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -834,7 +845,7 @@
     },
     {
       "id": "guard_armor",
-      "name_ko": "수호 갑주",
+      "name_ko": "\uc218\ud638 \uac11\uc8fc",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -854,7 +865,7 @@
     },
     {
       "id": "focuser",
-      "name_ko": "집중 장치",
+      "name_ko": "\uc9d1\uc911 \uc7a5\uce58",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -874,7 +885,7 @@
     },
     {
       "id": "swift_bow",
-      "name_ko": "속사 활",
+      "name_ko": "\uc18d\uc0ac \ud65c",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -895,7 +906,7 @@
     },
     {
       "id": "crit_scope",
-      "name_ko": "치명 조준경",
+      "name_ko": "\uce58\uba85 \uc870\uc900\uacbd",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -916,7 +927,7 @@
     },
     {
       "id": "ward_mantle",
-      "name_ko": "방호 망토",
+      "name_ko": "\ubc29\ud638 \ub9dd\ud1a0",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -937,7 +948,7 @@
     },
     {
       "id": "reservoir",
-      "name_ko": "비축 장치",
+      "name_ko": "\ube44\ucd95 \uc7a5\uce58",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -959,7 +970,7 @@
     },
     {
       "id": "blood_edge",
-      "name_ko": "흡수 날",
+      "name_ko": "\ud761\uc218 \ub0a0",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -979,7 +990,7 @@
     },
     {
       "id": "iron_ring",
-      "name_ko": "철벽 고리",
+      "name_ko": "\ucca0\ubcbd \uace0\ub9ac",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1000,7 +1011,7 @@
     },
     {
       "id": "tempest_glaive",
-      "name_ko": "폭풍 창",
+      "name_ko": "\ud3ed\ud48d \ucc3d",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1021,7 +1032,7 @@
     },
     {
       "id": "fortress",
-      "name_ko": "성벽 심장",
+      "name_ko": "\uc131\ubcbd \uc2ec\uc7a5",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1048,7 +1059,7 @@
     },
     {
       "id": "star_core",
-      "name_ko": "성운 핵",
+      "name_ko": "\uc131\uc6b4 \ud575",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1071,7 +1082,7 @@
     },
     {
       "id": "falcon_eye",
-      "name_ko": "매의 눈",
+      "name_ko": "\ub9e4\uc758 \ub208",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1093,7 +1104,7 @@
     },
     {
       "id": "sanctuary",
-      "name_ko": "안식 방벽",
+      "name_ko": "\uc548\uc2dd \ubc29\ubcbd",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1122,7 +1133,7 @@
     },
     {
       "id": "sanguine",
-      "name_ko": "적색 서약",
+      "name_ko": "\uc801\uc0c9 \uc11c\uc57d",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1144,7 +1155,7 @@
     },
     {
       "id": "healing_potion",
-      "name_ko": "회복 약",
+      "name_ko": "\ud68c\ubcf5 \uc57d",
       "tier": 0,
       "total_price": 150,
       "craft_fee": 150,

@@ -807,6 +807,15 @@ func _step_enemies(dt: float):
 		if e.get("hidden",false) and e.pos.distance_to(pos) <= float(e.get("reveal_distance",4.0)):
 			e.hidden = false
 			announce("Hidden enemy revealed!")
+		if e.kind == "healer":
+			e.heal_timer = maxf(0, float(e.get("heal_timer",0.0)) - dt)
+			if e.heal_timer <= 0:
+				e.heal_timer = 3.0
+				for other in enemies:
+					if other.id != e.id and other.hp > 0 and other.pos.distance_to(e.pos) <= 6:
+						other.hp = minf(other.max_hp, other.hp + 20)
+						_effect("heal", other.pos, 1.0, 0.4)
+				_effect("heal", e.pos, 2.0, 0.5)
 		if e.telegraph>0:
 			e.telegraph -= dt
 			if e.telegraph<=0: _enemy_attack(e)
