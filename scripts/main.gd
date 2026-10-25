@@ -817,6 +817,7 @@ func _draw() -> void:
 		_draw_hud()
 		_draw_controls()
 		_draw_status_strip()
+		_draw_minimap()
 		if banner_time > 0 and modal == "" and str(_status_content().title)=="":
 			var alpha: float = minf(1, banner_time)
 			_set_ui_paint(Rect2(425,138,430,46))
@@ -1313,6 +1314,29 @@ func _draw_defenders() -> void:
 		if alive:
 			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
+func _draw_minimap() -> void:
+	var mm_rect = Rect2(1080, 50, 180, 120)
+	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
+	# 맵 경계
+	draw_rect(Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10)), Color(0.15,0.2,0.15,0.3), false, 1)
+	# 적 표시
+	for e in model.enemies:
+		var mx: float = mm_rect.position.x + 5 + (e.pos.x / 96.0) * (mm_rect.size.x - 10)
+		var my: float = mm_rect.position.y + 5 + (e.pos.y / 48.0) * (mm_rect.size.y - 10)
+		draw_circle(Vector2(mx,my), 2.0, RED)
+	# 동료 표시
+	for ally in model.allies:
+		var ax: float = mm_rect.position.x + 5 + (ally.pos.x / 96.0) * (mm_rect.size.x - 10)
+		var ay: float = mm_rect.position.y + 5 + (ally.pos.y / 48.0) * (mm_rect.size.y - 10)
+		draw_circle(Vector2(ax,ay), 2.5, TEAL)
+	# 영웅 표시
+	var hx: float = mm_rect.position.x + 5 + (model.pos.x / 96.0) * (mm_rect.size.x - 10)
+	var hy: float = mm_rect.position.y + 5 + (model.pos.y / 48.0) * (mm_rect.size.y - 10)
+	draw_circle(Vector2(hx,hy), 3.0, GOLD)
+	# 베이스 표시
+	var bx: float = mm_rect.position.x + 5 + (4.0 / 96.0) * (mm_rect.size.x - 10)
+	var by: float = mm_rect.position.y + 5 + (12.0 / 48.0) * (mm_rect.size.y - 10)
+	draw_circle(Vector2(bx,by), 3.0, Color(0.9,0.7,0.3))
 func _notice_text(notice: String) -> String:
 	var key: String = copy.notice_key(notice)
 	if key!="": return _t(key,{"seconds":_cooldown_text(model.boss_pattern_left)})
