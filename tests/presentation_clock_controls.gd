@@ -1,0 +1,70 @@
+extends SceneTree
+## Native UI clock/analog regression fixture. Synthetic deltas are not FPS evidence.
+## Uses ordinary new/load actions and temporary test save data; run with isolated user data.
+var failures: Array = []
+var checks: int = 0
+func check(ok: bool, label: String):
+ checks += 1
+ if not ok: failures.append(label)
+func close(a: float,b: float) -> bool: return absf(a-b)<0.00001
+func _initialize(): call_deferred("audit")
+func audit():
+ var main=load("res://scripts/main.gd").new()
+ root.add_child(main)
+ await process_frame
+ main.set_process(false)
+ main.sound_enabled=false
+ main._start_new()
+ for i in range(60): main._process(1.0/60.0)
+ var c=main.clock_metrics()
+ check(close(c.active_wall_seconds,1),"normal active delta")
+ check(close(c.admitted_simulation_seconds,1),"normal admitted")
+ check(c.completed_fixed_steps==30,"normal 30 ticks")
+ check(close(c.dropped_active_seconds,0),"normal no drop")
+ check(close(c.accumulator_seconds,0),"normal no remainder")
+ main._start_new()
+ main._process(1.0)
+ c=main.clock_metrics()
+ check(close(c.active_wall_seconds,1),"slow active delta")
+ check(close(c.admitted_simulation_seconds,0.15),"slow admits150ms")
+ check(close(c.dropped_active_seconds,0.85),"slow drop explicit")
+ check(c.completed_fixed_steps==4,"slow existing four ticks")
+ check(close(c.simulated_seconds+c.accumulator_seconds,c.admitted_simulation_seconds),"time accounting identity")
+ check(c.capped_frames==1,"cap count")
+ main._start_new()
+ main._process(0.01)
+ main._open_modal("pause")
+ main._process(2.0)
+ c=main.clock_metrics()
+ check(close(c.active_wall_seconds,0.01),"menu excluded fromactive")
+ check(close(c.paused_menu_seconds,2),"menu pause counted")
+ main._notification(main.NOTIFICATION_APPLICATION_FOCUS_OUT)
+ main._process(3.0)
+ c=main.clock_metrics()
+ check(close(c.paused_background_seconds,3),"background separate")
+ main._notification(main.NOTIFICATION_APPLICATION_FOCUS_IN)
+ var discarded=float(c.discarded_accumulator_seconds)
+ main._start_new()
+ c=main.clock_metrics()
+ check(close(c.accumulator_seconds,0),"restart removes fraction")
+ check(close(c.discarded_accumulator_seconds-discarded,0.01),"intentional reset accounted")
+ main._process(0.02)
+ main.model.save_checkpoint()
+ main._open_modal("pause")
+ main._action("title","")
+ main._action("continue","")
+ c=main.clock_metrics()
+ check(c.reset_reason=="load" and close(c.accumulator_seconds,0),"load clears previous fraction")
+ check(main.qa_controller==null,"normal launch no qa controller")
+ for strength in [0.25,0.5,0.75,1.0]:
+  for i in range(8):
+   var direction=Vector2.from_angle(i*TAU/8.0)
+   main._set_stick(main.joystick_center+direction*61.0*strength)
+   var movement=main._movement()
+   check(close(movement.length(),strength),"analog magnitude %s/%s" % [strength,i])
+   var projected=Vector2(movement.x*main.MAP.size.x/48.0,movement.y*main.MAP.size.y/24.0).normalized()
+   check(projected.distance_to(direction)<0.00001,"screen direction %s/%s" % [strength,i])
+ main._set_stick(main.joystick_center+Vector2.RIGHT*61.0*0.1)
+ check(main._movement()==Vector2.ZERO,"dead zone retained")
+ print("CLOCK_AND_ANALOG_AUDIT ",JSON.stringify({"checks":checks,"failures":failures,"metrics":c}))
+ quit(0 if failures.is_empty() else 1)

@@ -1,0 +1,41 @@
+; Emberwatch: The Last Rampart, offline solo Android prototype.
+config_version=5
+
+[application]
+boot_splash/bg_color=Color(0.02, 0.04, 0.075, 1)
+boot_splash/image="res://assets/art/app_icon_v1.png"
+boot_splash/stretch_mode=1
+boot_splash/minimum_display_time=0
+config/quit_on_go_back=false
+config/name="DUSKWARD"
+config/version="0.3.0"
+config/icon="res://assets/art/app_icon_v1.png"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+config/description="Offline hero siege. Defend the Emberwatch through ten waves and the Rampart Breaker."
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/handheld/orientation=0
+
+
+[rendering]
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.025, 0.045, 0.075, 1)
+
+[physics]
+common/physics_ticks_per_second=30
+
+[input_devices]
+pointing/emulate_touch_from_mouse=false
+pointing/emulate_mouse_from_touch=false
+
+[audio]
+driver/enable_input=false

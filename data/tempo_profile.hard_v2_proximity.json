@@ -1,0 +1,142 @@
+{
+  "version": "0.3.0-hard-v2",
+  "status": "experimental harder role-composition profile; predeclared pilot pending",
+  "spawn_interval_seconds": 0.5,
+  "initial_spawn_count": 3,
+  "preparation_seconds": 8.0,
+  "kill_gold_per_cost": 6,
+  "kill_xp_per_cost": 15,
+  "wave_reward_multiplier": 1.25,
+  "defenders": {
+    "enabled": true,
+    "count": 2,
+    "hp": 260.0,
+    "damage": 14.0,
+    "attack_interval_seconds": 1.2,
+    "range": 6.0,
+    "respawn_seconds": 22.0,
+    "positions": [
+      [
+        7.0,
+        10.0
+      ],
+      [
+        7.0,
+        14.0
+      ]
+    ]
+  },
+  "hunt": {
+    "enabled": true,
+    "waves": [
+      4,
+      8
+    ],
+    "window_seconds": 25.0,
+    "gold_reward": 120,
+    "xp_reward": 100,
+    "min_castle_ratio": 0.35,
+    "activation_radius": 2.5,
+    "position": [
+      28.0,
+      6.0
+    ],
+    "enemy_counts": {
+      "crawler": 3,
+      "guard": 1
+    },
+    "offer_delay_seconds": 6.0,
+    "leash_radius": 5.5,
+    "return_seconds": 2.0,
+    "emergency_castle_ratio": 0.3
+  },
+  "unchanged": [
+    "simulation rate",
+    "frame cap",
+    "attack telegraphs",
+    "skill cooldowns",
+    "hero base/growth",
+    "item prices",
+    "enemy HP and damage multipliers",
+    "boss patterns"
+  ],
+  "wave_counts": [
+    {
+      "crawler": 20,
+      "skirmisher": 2
+    },
+    {
+      "crawler": 20,
+      "skirmisher": 2,
+      "shooter": 4,
+      "guard": 2
+    },
+    {
+      "crawler": 22,
+      "skirmisher": 5,
+      "shooter": 4,
+      "siege": 1
+    },
+    {
+      "crawler": 24,
+      "skirmisher": 4,
+      "shooter": 4,
+      "guard": 2,
+      "siege": 2
+    },
+    {
+      "crawler": 26,
+      "skirmisher": 5,
+      "shooter": 4,
+      "guard": 3,
+      "siege": 2
+    },
+    {
+      "crawler": 26,
+      "skirmisher": 5,
+      "shooter": 6,
+      "guard": 3,
+      "siege": 3
+    },
+    {
+      "crawler": 25,
+      "skirmisher": 8,
+      "shooter": 6,
+      "guard": 4,
+      "siege": 3
+    },
+    {
+      "crawler": 25,
+      "skirmisher": 8,
+      "shooter": 8,
+      "guard": 4,
+      "siege": 4
+    },
+    {
+      "crawler": 26,
+      "skirmisher": 9,
+      "shooter": 8,
+      "guard": 5,
+      "siege": 4
+    },
+    {
+      "crawler": 28,
+      "skirmisher": 8,
+      "shooter": 10,
+      "guard": 6,
+      "siege": 4
+    }
+  ],
+  "wave_budgets": [
+    24,
+    44,
+    50,
+    64,
+    72,
+    84,
+    93,
+    105,
+    112,
+    122
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "version": "0.3.0-fast-v1",
+  "status": "experimental user-requested faster-pressure profile; not yet balanced",
+  "wave_count_multiplier": 1.35,
+  "spawn_interval_seconds": 0.5,
+  "initial_spawn_count": 3,
+  "preparation_seconds": 8.0,
+  "kill_gold_per_cost": 8,
+  "kill_xp_per_cost": 15,
+  "wave_reward_multiplier": 1.25,
+  "defenders": {
+    "enabled": true,
+    "count": 2,
+    "hp": 260.0,
+    "damage": 14.0,
+    "attack_interval_seconds": 1.2,
+    "range": 6.0,
+    "respawn_seconds": 22.0,
+    "positions": [
+      [
+        7.0,
+        10.0
+      ],
+      [
+        7.0,
+        14.0
+      ]
+    ]
+  },
+  "hunt": {
+    "enabled": true,
+    "waves": [
+      4,
+      8
+    ],
+    "window_seconds": 25.0,
+    "gold_reward": 120,
+    "xp_reward": 100,
+    "min_castle_ratio": 0.35,
+    "activation_radius": 2.5,
+    "position": [
+      28.0,
+      6.0
+    ],
+    "enemy_counts": {
+      "crawler": 3,
+      "guard": 1
+    },
+    "offer_delay_seconds": 6.0,
+    "leash_radius": 5.5,
+    "return_seconds": 2.0,
+    "emergency_castle_ratio": 0.3
+  },
+  "unchanged": [
+    "simulation rate",
+    "frame cap",
+    "attack telegraphs",
+    "skill cooldowns",
+    "hero base/growth",
+    "item prices",
+    "enemy HP and damage multipliers",
+    "boss patterns"
+  ]
+}
