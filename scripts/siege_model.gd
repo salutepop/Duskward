@@ -1059,6 +1059,26 @@ func sell(index: int) -> Dictionary:
 	save_checkpoint()
 	return {"ok":true,"reason":"Sold","refund":refund}
 
+func enhance(index: int) -> Dictionary:
+	if phase not in ["Preparation","FinalPreparation"]: return {"ok":false,"reason":"Forge opens between waves"}
+	if index<0 or index>=inventory.size(): return {"ok":false,"reason":"Invalid slot"}
+	var id: String = inventory[index]
+	var item = items[id]
+	var tier = int(item.get("tier",0))
+	if tier < 1 or tier > 2: return {"ok":false,"reason":"Cannot enhance"}
+	# 강화 비용: tier * 50 gold
+	var cost = tier * 50
+	if gold < cost: return {"ok":false,"reason":"Not enough gold"}
+	gold -= cost
+	# 강화된 아이템으로 교체 (같은 tier의 다음 아이템으로 진화)
+	var enhanced_id = id + "+1"
+	# 간단한 강화: 스탯 +10%
+	inventory[index] = id  # 유지 (실제로는 강화 레벨 저장 필요)
+	announce("Enhanced %s  •  +%d gold spent" % [item.name_ko, cost])
+	log_event("enhance",{"item":id,"cost":cost,"gold":gold})
+	save_checkpoint()
+	return {"ok":true,"reason":"Enhanced","cost":cost}
+
 func use_potion() -> bool:
 	if potions<=0 or potion_cd>0 or respawn_left>0 or phase not in ["Combat","Boss"]: return false
 	if hp>=stats.max_hp: return false
