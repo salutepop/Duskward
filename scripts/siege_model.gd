@@ -168,7 +168,7 @@ func reset(new_hero: String, new_seed: int = 12345):
 	boss_thresholds = []
 	boss_add_queue = 0
 	boss_add_timer = 0
-	metrics = {"kills":0,"deaths":0,"damage_dealt":0.0,"damage_taken":0.0,"base_damage":0.0,"casts":0,"weaknesses_destroyed":0,"cannons_cancelled":0,"gold_earned":300,"waves":[],"boss_seconds":0.0,"casts_by_slot":{},"damage_by_source":{},"hits_by_source":{},"base_damage_by_kind":{},"hero_damage_by_kind":{},"defender_damage":0.0,"defender_deaths":0,"defender_kills":0,"hunt_attempts":0,"hunt_successes":0,"hunt_gold":0,"hunt_xp":0,"hunt_seconds":0.0,"lane_gold":0,"lane_xp":0,"hero_lane_gold":0,"hero_lane_xp":0,"defender_lane_gold":0,"defender_lane_xp":0,"wave_gold":0,"wave_xp":0,"peak_enemies":0,"peak_nearby_8m":0,"first_hit_at":0.0,"level_times":{"1":0.0},"purchase_times":{}}
+	metrics = {"kills":0,"deaths":0,"damage_dealt":0.0,"damage_taken":0.0,"base_damage":0.0,"casts":0,"weaknesses_destroyed":0,"cannons_cancelled":0,"gold_earned":300,"waves":[],"boss_seconds":0.0,"casts_by_slot":{},"damage_by_source":{},"hits_by_source":{},"base_damage_by_kind":{},"hero_damage_by_kind":{},"defender_damage":0.0,"defender_deaths":0,"defender_kills":0,"hunt_attempts":0,"hunt_successes":0,"hunt_gold":0,"hunt_xp":0,"hunt_seconds":0.0,"lane_gold":0,"lane_xp":0,"hero_lane_gold":0,"hero_lane_xp":0,"defender_lane_gold":0,"defender_lane_xp":0,"wave_gold":0,"wave_xp":0,"peak_enemies":0,"peak_nearby_8m":0,"first_hit_at":0.0,"level_times":{"1":0.0},"purchase_times":{},"total_kills":0,"wave_kills":0}
 	recalculate_stats()
 	hp = stats.max_hp
 	energy = stats.max_energy
@@ -428,6 +428,9 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 				spawn_timer = 0.9
 			spawn_was_capped = false
 	if phase == "Boss": _step_boss(dt)
+	# 2k kill arena
+	if phase == "Combat" and metrics.total_kills >= 2000 and not special_event.get("arena_active",false):
+		_trigger_kill_arena()
 	if phase == "SpecialEvent": _step_special_event(dt)
 	_step_hunt_clock(dt)
 	_step_defenders(dt)
@@ -672,6 +675,8 @@ func _resolve_deaths():
 				metrics.hero_lane_gold += reward
 				metrics.hero_lane_xp += reward_xp
 			metrics.kills += 1
+			metrics.total_kills += 1
+			metrics.wave_kills += 1
 			_update_level()
 			# 아이템 드롭 (20% 확률)
 			if rng.randf() < 0.2:
@@ -1556,10 +1561,19 @@ func _observe_pressure() -> void:
 	metrics.peak_enemies = maxi(int(metrics.peak_enemies),main_enemy_count())
 	metrics.peak_nearby_8m = maxi(int(metrics.peak_nearby_8m),nearby)
 
+func _trigger_kill_arena() -> void:
+	phase = "SpecialEvent"
+	special_event = {"active":true, "arena_active":true, "type":"kill_arena", "timer":0.0, "duration":60.0}
+	announce("SPECIAL EVENT - 2000 Kills! 60s Elite Hunt Arena!")
+	log_event("special_event_start",{"type":"kill_arena"})
+	for i in 5: spawn_enemy("elite",_spawn_position(),false)
+	for i in 3: spawn_enemy("healer",_spawn_position(),false)
+	spawn_queue.clear()
+
 func _trigger_special_event() -> void:
 	phase = "SpecialEvent"
 	special_event = {"active":true,"enemies_spawned":0,"max_enemies":20,"timer":0.0,"duration":45.0}
-	announce("SPECIAL EVENT  •  Bonus arena! Kill all enemies for extra rewards!")
+	announce("SPECIAL EVENT - Bonus arena! Kill all enemies for extra rewards!")
 	log_event("special_event_start",{"wave":completed_wave})
 	for i in 8:
 		spawn_enemy("crawler",_spawn_position(),false)
