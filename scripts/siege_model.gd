@@ -82,6 +82,7 @@ var boss_add_queue = 0
 var boss_add_timer = 0.0
 var content_hash = ""
 var defenders: Array = []
+var allies: Array = []
 var hunt: Dictionary = {}
 var _combat_stats = preload("res://scripts/models/combat_stats.gd")
 var rng = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
@@ -168,6 +169,7 @@ func reset(new_hero: String, new_seed: int = 12345):
 	energy = stats.max_energy
 	hunt = {}
 	_reset_defenders()
+	_reset_allies()
 	announce("Choose your gear. The first wave starts when you are ready.")
 
 func recalculate_stats():
@@ -334,6 +336,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 	if phase == "Boss": _step_boss(dt)
 	_step_hunt_clock(dt)
 	_step_defenders(dt)
+	_step_allies(dt)
 	_observe_pressure()
 	_step_casts(dt)
 	_step_zones(dt)
@@ -1330,6 +1333,44 @@ func _step_defenders(dt: float) -> void:
 		if direction==Vector2.ZERO: direction = Vector2.RIGHT
 		projectiles.append({"pos":ally.pos,"previous":ally.pos,"velocity":direction*22.0,"hostile":false,"radius":0.15,"life":0.8,"damage":float(tempo.defenders.damage),"damage_type":"physical","target_id":target.id,"basic":false,"hero":"defender","source":"defender"})
 		ally.attack_left = float(tempo.defenders.attack_interval_seconds)
+
+func _reset_allies() -> void:
+	allies = []
+	if ruleset != "fast": return
+	# AI 동료 2명: ranger + arcanist
+	var ally_defs = [
+		{"hero":"ranger","pos":Vector2(12,20),"hp":650.0,"max_hp":650.0,"attack_left":0.5,"respawn_left":0.0,"flash":0.0,"ad":32.0},
+		{"hero":"arcanist","pos":Vector2(12,28),"hp":620.0,"max_hp":620.0,"attack_left":0.5,"respawn_left":0.0,"flash":0.0,"ad":24.0}
+	]
+	for a in ally_defs:
+		allies.append(a)
+
+func _step_allies(dt: float) -> void:
+	if phase not in ["Combat","Boss"]: return
+	for ally in allies:
+		ally.flash = maxf(0,float(ally.flash)-dt)
+		if ally.hp<=0:
+			ally.respawn_left -= dt
+			if ally.respawn_left<=0:
+				ally.hp = ally.max_hp
+				ally.attack_left = 0.5
+			continue
+		ally.attack_left -= dt
+		if ally.attack_left>0: continue
+		# AI: 가장 가까운 적 공격
+		var target: Dictionary = {}
+		var distance: float = 12.0
+		for enemy in enemies:
+			if enemy.hp<=0 or enemy.get("hunt_enemy",false): continue
+			var candidate: float = ally.pos.distance_to(enemy.pos)
+			if candidate<=distance:
+				distance = candidate
+				target = enemy
+		if target.is_empty(): continue
+		var direction: Vector2 = (target.pos-ally.pos).normalized()
+		if direction==Vector2.ZERO: direction = Vector2.RIGHT
+		projectiles.append({"pos":ally.pos,"previous":ally.pos,"velocity":direction*22.0,"hostile":false,"radius":0.15,"life":0.8,"damage":float(ally.get("ad",30)),"damage_type":"physical","target_id":target.id,"basic":false,"hero":ally.hero,"source":"ally"})
+		ally.attack_left = 0.8
 
 func main_enemy_count() -> int:
 	var count: int = 0
