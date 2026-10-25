@@ -1,9 +1,9 @@
 {
   "version": "0.3.0-hard-v2-optin",
   "status": "experimental harder role-composition profile with explicit optional hunt input; new-profile acceptance pending",
-  "spawn_interval_seconds": 0.5,
+  "spawn_interval_seconds": 0.4,
   "initial_spawn_count": 3,
-  "preparation_seconds": 8.0,
+  "preparation_seconds": 6.0,
   "kill_gold_per_cost": 6,
   "kill_xp_per_cost": 15,
   "wave_reward_multiplier": 1.25,

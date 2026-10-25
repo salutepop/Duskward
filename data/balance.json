@@ -1305,6 +1305,66 @@
       "sell_price": 360,
       "max_per_slot": 1,
       "mvp": true
+    },
+    {
+      "id": "swift_boots",
+      "name_ko": "\uc2e0\uc18d\uc758 \uc7a5\ud654",
+      "tier": 1,
+      "total_price": 250,
+      "craft_fee": 250,
+      "recipe": {},
+      "stats": {
+        "attack_speed_bonus": 0.15,
+        "speed": 0.3
+      },
+      "passive": null,
+      "unique_group": "none",
+      "unlock_after_wave": 0,
+      "sell_price": 150,
+      "max_per_slot": 1,
+      "mvp": true
+    },
+    {
+      "id": "crystal_orb",
+      "name_ko": "\uc218\uc815 \uad6c\uc2ac",
+      "tier": 2,
+      "total_price": 550,
+      "craft_fee": 250,
+      "recipe": {
+        "focus_stone": 1,
+        "energy_cell": 1
+      },
+      "stats": {
+        "sp": 35,
+        "max_energy": 80
+      },
+      "passive": null,
+      "unique_group": "none",
+      "unlock_after_wave": 2,
+      "sell_price": 330,
+      "max_per_slot": 1,
+      "mvp": true
+    },
+    {
+      "id": "vampire_fang",
+      "name_ko": "\ud761\ud608 \uc1a1\uacf3\ub2c8",
+      "tier": 2,
+      "total_price": 600,
+      "craft_fee": 280,
+      "recipe": {
+        "blood_edge": 1,
+        "iron_blade": 1
+      },
+      "stats": {
+        "ad": 25,
+        "lifesteal": 0.2
+      },
+      "passive": null,
+      "unique_group": "lifesteal_highest",
+      "unlock_after_wave": 2,
+      "sell_price": 360,
+      "max_per_slot": 1,
+      "mvp": true
     }
   ],
   "combat": {
