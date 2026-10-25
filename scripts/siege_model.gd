@@ -86,6 +86,11 @@ var boss_add_timer = 0.0
 var content_hash = ""
 var defenders: Array = []
 var hunt: Dictionary = {}
+var rng: RandomNumberGenerator = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
+var spawn_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var camp_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _rng_manager = RngManager.new()
+var _combat_stats = preload("res://scripts/models/combat_stats.gd")
 
 func _init(selected_ruleset: String = "fast"):
 	var source = FileAccess.get_file_as_string("res://data/balance.json")
@@ -103,9 +108,7 @@ func _init(selected_ruleset: String = "fast"):
 func reset(new_hero: String, new_seed: int = 12345):
 	hero_id = new_hero if heroes.has(new_hero) else "guardian"
 	seed_value = new_seed
-	rng.seed = new_seed ^ 0x434F4D424154
-	spawn_rng.seed = new_seed ^ 0x535041574E
-	camp_rng.seed = new_seed ^ 0x43414D50
+	_rng_manager.seed_all(new_seed)
 	phase = "Preparation"
 	wave = 0
 	completed_wave = 0
@@ -170,32 +173,15 @@ func reset(new_hero: String, new_seed: int = 12345):
 	announce("Choose your gear. The first wave starts when you are ready.")
 
 func recalculate_stats():
-	stats = derived_stats(hero_id,level,inventory)
-	hp = minf(hp,stats.max_hp)
-	energy = minf(energy,stats.max_energy)
+	stats = _combat_stats.derived_stats(heroes, items, hero_id, level, inventory)
+	hp = minf(hp, stats.max_hp)
+	energy = minf(energy, stats.max_energy)
 
 func derived_stats(for_hero: String, for_level: int, equipment: Array) -> Dictionary:
-	var derived: Dictionary = heroes[for_hero].base.duplicate(true)
-	for key in heroes[for_hero].growth:
-		derived[key] = float(derived.get(key,0)) + float(heroes[for_hero].growth[key]) * (for_level-1)
-	for id in equipment:
-		if not items.has(id): continue
-		for key in items[id].stats:
-			if key == "lifesteal":
-				derived[key] = maxf(float(derived.get(key,0)),float(items[id].stats[key]))
-			else:
-				derived[key] = float(derived.get(key,0)) + float(items[id].stats[key])
-	derived.crit_chance = clampf(float(derived.get("crit_chance",0)),0,0.4)
-	derived.attack_speed_bonus = clampf(float(derived.get("attack_speed_bonus",0)),-0.5,2.0)
-	derived.cooldown_reduction = clampf(float(derived.get("cooldown_reduction",0)),0,0.3)
-	derived.armor = clampf(float(derived.armor),-50,300)
-	derived.magic_resist = clampf(float(derived.magic_resist),-50,300)
-	derived.lifesteal = float(derived.get("lifesteal",0))
-	return derived
+	return _combat_stats.derived_stats(heroes, items, for_hero, for_level, equipment)
 
 static func mitigation(defense: float) -> float:
-	defense = clampf(defense,-50,300)
-	return 100.0/(100.0+defense) if defense >= 0 else 2.0-100.0/(100.0-defense)
+	return CombatStats.mitigation(defense)
 
 func ability(slot: String) -> Dictionary:
 	return abilities.get(hero_id+"."+slot,{})
