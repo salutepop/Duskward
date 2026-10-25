@@ -83,6 +83,7 @@ var boss_add_timer = 0.0
 var content_hash = ""
 var defenders: Array = []
 var allies: Array = []
+var enhanced_items: Dictionary = {}
 var hunt: Dictionary = {}
 var _combat_stats = preload("res://scripts/models/combat_stats.gd")
 var rng = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
@@ -1077,14 +1078,22 @@ func enhance(index: int) -> Dictionary:
 	var item = items[id]
 	var tier = int(item.get("tier",0))
 	if tier < 1 or tier > 2: return {"ok":false,"reason":"Cannot enhance"}
-	# 강화 비용: tier * 50 gold
-	var cost = tier * 50
+	var cost = tier * 50 + 30
 	if gold < cost: return {"ok":false,"reason":"Not enough gold"}
 	gold -= cost
-	# 강화된 아이템으로 교체 (같은 tier의 다음 아이템으로 진화)
+	# 강화 레벨 저장 (item_id + enhancement level)
 	var enhanced_id = id + "+1"
-	# 간단한 강화: 스탯 +10%
-	inventory[index] = id  # 유지 (실제로는 강화 레벨 저장 필요)
+	if not enhanced_items.has(enhanced_id):
+		enhanced_items[enhanced_id] = item.duplicate(true)
+		enhanced_items[enhanced_id].id = enhanced_id
+		enhanced_items[enhanced_id].name_ko = item.name_ko + " +1"
+		# 스탯 +15%
+		for key in enhanced_items[enhanced_id].stats:
+			enhanced_items[enhanced_id].stats[key] = int(float(enhanced_items[enhanced_id].stats[key]) * 1.15)
+	inventory[index] = enhanced_id
+	# items에 등록
+	if not items.has(enhanced_id):
+		items[enhanced_id] = enhanced_items[enhanced_id]
 	announce("Enhanced %s  •  +%d gold spent" % [item.name_ko, cost])
 	log_event("enhance",{"item":id,"cost":cost,"gold":gold})
 	save_checkpoint()
