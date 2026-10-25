@@ -231,6 +231,12 @@ func start_next_wave() -> bool:
 		for i in mini(int(tempo.initial_spawn_count),spawn_queue.size()):
 			spawn_enemy(spawn_queue.pop_front(),_spawn_position())
 		spawn_timer = float(tempo.spawn_interval_seconds)
+	# Elite variant: 10% chance to upgrade a crawler to elite in later waves
+	if wave >= 5:
+		for i in range(spawn_queue.size()):
+			if spawn_queue[i]=="crawler" and rng.randf() < 0.1:
+				spawn_queue[i] = "elite"
+	# register elite in enemy_types for rendering
 	announce("WAVE %d  •  %d invaders incoming" % [wave,spawn_queue.size()+enemies.size()])
 	log_event("wave_start",{"wave":wave,"base_hp":base_hp})
 	return true
@@ -249,11 +255,20 @@ func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: 
 		e = {"hp":18000.0,"damage":180.0,"interval":7.0,"speed":1.8,"armor":20.0,"magic_resist":20.0,"castle_multiplier":1.0,"cost":0}
 	elif kind == "weakness":
 		e = {"hp":120.0,"damage":0.0,"interval":99.0,"speed":0.0,"armor":0.0,"magic_resist":0.0,"castle_multiplier":0.0,"cost":0}
-	else:
-		e = enemy_types[kind].duplicate(true)
+	elif kind == "elite":
+		e = enemy_types["crawler"].duplicate(true)
+		e.hp *= 3.0
+		e.damage *= 1.5
+		e.speed *= 0.9
+		e.cost = 3
 		var w = data.waves[clampi(wave-1,0,9)]
 		e.hp *= float(w.hp_wave_multiplier)
 		e.damage *= float(w.damage_wave_multiplier)
+	else:
+		e = enemy_types[kind].duplicate(true)
+		var w2 = data.waves[clampi(wave-1,0,9)]
+		e.hp *= float(w2.hp_wave_multiplier)
+		e.damage *= float(w2.damage_wave_multiplier)
 	e.id = next_entity_id
 	next_entity_id += 1
 	e.kind = kind
