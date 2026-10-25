@@ -27,7 +27,7 @@ const OCCLUSION_BACKING_ALPHA = 0.12
 const OCCLUSION_INK_ALPHA = 0.45
 const OCCLUSION_TEXT_ALPHA = 0.85
 const DIAGNOSTIC_FIXTURES = ["corner-lower","corner-upper","left-stick","top-hud"]
-const HERO_IDS = ["guardian", "ranger", "arcanist"]
+const HERO_IDS = ["guardian", "ranger", "arcanist", "ghost", "crypt_lord", "samurai"]
 var HERO_NAMES: Dictionary = {}
 var HERO_ROLES: Dictionary = {}
 var HERO_BLURBS: Dictionary = {}
@@ -429,10 +429,9 @@ func _input(event: InputEvent) -> void:
 			elif key == KEY_ENTER and _is_preparation():
 				_next_wave()
 			elif key == KEY_TAB:
-				var heroes_list = ["guardian", "ranger", "arcanist"]
-				var current_idx = heroes_list.find(model.hero_id)
-				var next_idx = (current_idx + 1) % heroes_list.size()
-				model.switch_hero(heroes_list[next_idx])
+				var current_idx = HERO_IDS.find(model.hero_id)
+				var next_idx = (current_idx + 1) % HERO_IDS.size()
+				model.switch_hero(HERO_IDS[next_idx])
 	elif event is InputEventScreenTouch:
 		if event.pressed:
 			var slot: String = _skill_at(event.position)
@@ -1033,6 +1032,7 @@ func _draw_title() -> void:
 	_label(_t("title.offline"),Vector2(56,681),18,MUTED)
 
 func _draw_arena() -> void:
+	if art == null: return
 	art.terrain(self, Rect2(Vector2.ZERO,SIZE), time)
 	art.castle(self, _world(Vector2(4,12)), model.base_hp / maxf(1,model.max_base_hp), time)
 	_draw_hunt_camp()
@@ -1330,6 +1330,7 @@ func _draw_defenders() -> void:
 			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
 func _draw_minimap() -> void:
+	if model == null: return
 	var mm_rect = Rect2(20, 40, 160, 90)
 	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
 	# 맵 경계
@@ -1370,13 +1371,15 @@ func _notice_text(notice: String) -> String:
 	return _reason(notice)
 
 func _draw_hud() -> void:
+	if model == null: return
 	_set_ui_paint(paint_controls.hud_hero)
 	_panel(Rect2(24,22,340,108),Color(0.065,0.08,0.065,0.92),LINE,5)
 	art.hero(self,Vector2(66,94),model.hero_id,Vector2.RIGHT,time,1.0,false,ui_paint.x)
 	_label(HERO_NAMES[model.hero_id],Vector2(108,46),22,PAPER)
 	_label(_t("common.level",{"level":model.level}),Vector2(344,46),18,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
 	# Hero switch indicators
-	var hero_icons = [Vector2(380, 22), Vector2(420, 22), Vector2(460, 22)]
+	var hero_icons = [Vector2(340, 22), Vector2(380, 22), Vector2(420, 22), Vector2(460, 22), Vector2(500, 22), Vector2(540, 22)]
+	if model == null: return
 	for i in range(HERO_IDS.size()):
 		var hid = HERO_IDS[i]
 		var icon_pos = hero_icons[i]
@@ -1425,26 +1428,27 @@ func _set_coach(title: String, body: String, duration: float) -> void:
 	coach_left = duration
 
 func _status_content() -> Dictionary:
-	if model.boss_pattern_left>0:
+	if model == null or not model is Dictionary: return {"title":"","body":"","danger":false}
+	if model.get("boss_pattern_left",0)>0:
 		match model.boss_pattern:
 			"cannon": return {"title":_t("combat.cannon",{"seconds":_cooldown_text(model.boss_pattern_left)}),"body":"","danger":true}
 			"smash": return {"title":_t("combat.smash"),"body":"","danger":true}
 			"debris": return {"title":_t("combat.debris"),"body":"","danger":true}
-	if model.respawn_left>0:
-		return {"title":_t("combat.respawn",{"seconds":int(ceilf(model.respawn_left))}),"body":"","danger":true}
-	if not model.hazards.is_empty():
+	if model.get("respawn_left",0)>0:
+		return {"title":_t("combat.respawn",{"seconds":int(ceilf(model.get("respawn_left",0)))}),"body":"","danger":true}
+	if not model.get("hazards",[]).is_empty():
 		return {"title":_t("combat.hazard"),"body":"","danger":true}
 	if not skill_pointer.is_empty():
 		return {"title":_t("combat.aim"),"body":"","danger":false}
 	if coach_left>0:
 		return {"title":coach_title,"body":"","danger":false}
-	if _is_preparation() and model.wave==0:
+	if _is_preparation() and int(model.get("wave",0))==0:
 		return {"title":_t("combat.first_move" if fmod(time,8)<4 else "combat.first_skill"),"body":"","danger":false}
 	return {"title":"","body":"","danger":false}
 
 func _draw_status_strip() -> void:
 	var status: Dictionary = _status_content()
-	if str(status.title)=="": return
+	if not status is Dictionary or str(status.get("title",""))=="": return
 	var danger: bool = bool(status.danger)
 	var width: float = minf(900,maxf(420,font.get_string_size(str(status.title),HORIZONTAL_ALIGNMENT_LEFT,-1,22).x+48))
 	var y: float = 188 if model.phase in ["Boss","BossIntro"] else (526 if _is_preparation() else 140)
@@ -1454,6 +1458,7 @@ func _draw_status_strip() -> void:
 	ui_paint=Vector3.ONE
 
 func _draw_controls() -> void:
+	if model == null: return
 	var stick: Vector2 = joystick_center
 	_set_ui_paint(paint_controls.stick)
 	draw_circle(stick,66,_ui_fill(Color(0.025,0.03,0.025,0.68)))
@@ -1476,6 +1481,7 @@ func _draw_controls() -> void:
 		var slot: String = ["Q","W","E","R"][i]
 		var center: Vector2 = skill_center(i)
 		_set_ui_paint(paint_controls[slot])
+		if model == null: continue
 		var ability: Dictionary = model.ability(slot)
 		var unlocked: bool = model.level>=int(ability.get("unlock_level",1))
 		var cd: float = float(model.cooldowns.get(slot,0))
