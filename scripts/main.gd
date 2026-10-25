@@ -1070,7 +1070,10 @@ func _draw_arena() -> void:
 	_draw_aim_preview()
 	for e in model.enemies:
 		var p: Vector2 = _world(e.pos)
-		art.enemy(self,p,str(e.kind),time,float(e.get("telegraph",0))>0) if not e.get("hidden",false) else art.enemy(self,p,str(e.kind),time,false)
+		if e.get("hidden",false):
+			art.enemy(self,p,str(e.kind),time,false,0.3)
+		else:
+			art.enemy(self,p,str(e.kind),time,float(e.get("telegraph",0))>0)
 		var hp: float = float(e.hp)
 		var mhp: float = float(e.max_hp)
 		if hp < mhp or str(e.kind).contains("boss"):

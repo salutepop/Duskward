@@ -129,22 +129,22 @@ func hero(c: CanvasItem, at: Vector2, id: String, facing: Vector2, t: float, sca
 	c.draw_rect(Rect2(at+Vector2(-11,-20)*scale,Vector2(22,25)*scale),col.darkened(0.3))
 	c.draw_line(at+Vector2(9,-17)*scale,at+Vector2(24,-32)*scale,Color(Color("e1cb91"),opacity),4*scale,true)
 
-func enemy(c: CanvasItem, at: Vector2, kind: String, t: float, attacking: bool) -> void:
+func enemy(c: CanvasItem, at: Vector2, kind: String, t: float, attacking: bool, alpha: float = 1.0) -> void:
 	if kind=="weakness":
-		c.draw_circle(at,16,Color(0.92,0.65,0.25,0.15))
+		c.draw_circle(at,16,Color(0.92,0.65,0.25,0.15*alpha))
 		var pulse: float = 13+sin(t*8)*2
-		c.draw_colored_polygon(PackedVector2Array([at+Vector2(0,-pulse),at+Vector2(pulse,0),at+Vector2(0,pulse),at+Vector2(-pulse,0)]),Color("f3bf65"))
-		c.draw_arc(at,pulse+7,0,TAU,24,Color("fff0c7"),1.5,true)
+		c.draw_colored_polygon(PackedVector2Array([at+Vector2(0,-pulse),at+Vector2(pulse,0),at+Vector2(0,pulse),at+Vector2(-pulse,0)]),Color("f3bf65",alpha))
+		c.draw_arc(at,pulse+7,0,TAU,24,Color("fff0c7",alpha),1.5,true)
 		return
 	var height: float = enemy_height(kind)
 	var bob: float = sin(t*7+at.x*0.05)*1.3
 	c.draw_set_transform(at,0,Vector2(1,0.34))
-	c.draw_circle(Vector2.ZERO,height*0.29,Color(0.02,0.04,0.06,0.5))
+	c.draw_circle(Vector2.ZERO,height*0.29,Color(0.02,0.04,0.06,0.5*alpha))
 	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
-	if sprite(c,kind,at+Vector2(0,bob),height,false,Color(1,0.75,0.7) if attacking else Color.WHITE):
+	if sprite(c,kind,at+Vector2(0,bob),height,false,Color(1,0.75,0.7,alpha) if attacking else Color(1,1,1,alpha)):
 		return
-	c.draw_circle(at+Vector2(0,-10),14,Color("984b4f"))
-	c.draw_line(at+Vector2(-14,-15),at+Vector2(14,-15),Color("e5a179"),3,true)
+	c.draw_circle(at+Vector2(0,-10),14,Color("984b4f",alpha))
+	c.draw_line(at+Vector2(-14,-15),at+Vector2(14,-15),Color("e5a179",alpha),3,true)
 
 func _arrow(c: CanvasItem, start: Vector2, end: Vector2, color: Color, width: float=3.0) -> void:
 	var d: Vector2 = (end-start).normalized()
