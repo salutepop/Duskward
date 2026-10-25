@@ -345,6 +345,64 @@
         "friendly_cap": 4,
         "radius": 7
       }
+    },
+    {
+      "id": "guardian.F",
+      "hero": "guardian",
+      "slot": "F",
+      "unlock_level": 3,
+      "cooldown_seconds": 12,
+      "energy_cost": 20,
+      "windup_seconds": 0.3,
+      "damage_type": "physical",
+      "base_damage": 90,
+      "ad_coefficient": 1.0,
+      "sp_coefficient": 0,
+      "target_cap": 1,
+      "damage_falloff": 1,
+      "extra": {
+        "stun_duration": 1.5,
+        "radius": 2.0
+      }
+    },
+    {
+      "id": "ranger.F",
+      "hero": "ranger",
+      "slot": "F",
+      "unlock_level": 3,
+      "cooldown_seconds": 10,
+      "energy_cost": 18,
+      "windup_seconds": 0.2,
+      "damage_type": "physical",
+      "base_damage": 45,
+      "ad_coefficient": 0.8,
+      "sp_coefficient": 0,
+      "target_cap": 5,
+      "damage_falloff": 0.8,
+      "extra": {
+        "count": 3,
+        "spread_angle": 15
+      }
+    },
+    {
+      "id": "arcanist.F",
+      "hero": "arcanist",
+      "slot": "F",
+      "unlock_level": 3,
+      "cooldown_seconds": 14,
+      "energy_cost": 25,
+      "windup_seconds": 0.4,
+      "damage_type": "magic",
+      "base_damage": 60,
+      "ad_coefficient": 0,
+      "sp_coefficient": 1.2,
+      "target_cap": 1,
+      "damage_falloff": 1,
+      "extra": {
+        "dot_duration": 4,
+        "dot_damage_per_second": 15,
+        "radius": 2.5
+      }
     }
   ],
   "enemies": [
@@ -1093,7 +1151,10 @@
         "ad": 20,
         "lifesteal": 0.08
       },
-      "passive": null,
+      "passive": {
+        "type": "lifesteal",
+        "fraction": 0.1
+      },
       "unique_group": "lifesteal_highest",
       "unlock_after_wave": 2,
       "sell_price": 360,
@@ -1258,7 +1319,10 @@
         "attack_speed_bonus": 0.15,
         "lifesteal": 0.12
       },
-      "passive": null,
+      "passive": {
+        "type": "lifesteal",
+        "fraction": 0.15
+      },
       "unique_group": "lifesteal_highest",
       "unlock_after_wave": 5,
       "sell_price": 840,
@@ -1317,7 +1381,10 @@
         "attack_speed_bonus": 0.15,
         "speed": 0.3
       },
-      "passive": null,
+      "passive": {
+        "type": "movement_speed",
+        "fraction": 0.15
+      },
       "unique_group": "none",
       "unlock_after_wave": 0,
       "sell_price": 150,
@@ -1338,7 +1405,10 @@
         "sp": 35,
         "max_energy": 80
       },
-      "passive": null,
+      "passive": {
+        "type": "energy_regen",
+        "fraction": 0.2
+      },
       "unique_group": "none",
       "unlock_after_wave": 2,
       "sell_price": 330,
@@ -1359,7 +1429,10 @@
         "ad": 25,
         "lifesteal": 0.2
       },
-      "passive": null,
+      "passive": {
+        "type": "lifesteal",
+        "fraction": 0.08
+      },
       "unique_group": "lifesteal_highest",
       "unlock_after_wave": 2,
       "sell_price": 360,
