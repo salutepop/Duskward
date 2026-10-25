@@ -57,9 +57,6 @@ var spawn_queue: Array = []
 var event_log: Array = []
 var metrics: Dictionary = {}
 ## Independent streams keep combat decisions from changing future spawn layouts.
-var rng = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
-var camp_rng = RandomNumberGenerator.new()
-var spawn_rng = RandomNumberGenerator.new()
 var seed_value = 12345
 var next_entity_id = 1
 var auto_attack_enabled = true
@@ -86,11 +83,10 @@ var boss_add_timer = 0.0
 var content_hash = ""
 var defenders: Array = []
 var hunt: Dictionary = {}
-var rng: RandomNumberGenerator = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
-var spawn_rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var camp_rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var _rng_manager = RngManager.new()
 var _combat_stats = preload("res://scripts/models/combat_stats.gd")
+var rng = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
+var spawn_rng = RandomNumberGenerator.new()
+var camp_rng = RandomNumberGenerator.new()
 
 func _init(selected_ruleset: String = "fast"):
 	var source = FileAccess.get_file_as_string("res://data/balance.json")
@@ -108,7 +104,9 @@ func _init(selected_ruleset: String = "fast"):
 func reset(new_hero: String, new_seed: int = 12345):
 	hero_id = new_hero if heroes.has(new_hero) else "guardian"
 	seed_value = new_seed
-	_rng_manager.seed_all(new_seed)
+	rng.seed = new_seed ^ 0x434F4D424154
+	spawn_rng.seed = new_seed ^ 0x535041574E
+	camp_rng.seed = new_seed ^ 0x43414D50
 	phase = "Preparation"
 	wave = 0
 	completed_wave = 0
