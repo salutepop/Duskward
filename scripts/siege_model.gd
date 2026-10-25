@@ -84,6 +84,8 @@ var content_hash = ""
 var defenders: Array = []
 var allies: Array = []
 var special_event: Dictionary = {}
+var hero_switch_cooldown: float = 0.0
+var inactive_heroes: Dictionary = {}
 var enhanced_items: Dictionary = {}
 var _active_set_effects: Dictionary = {}
 var hunt: Dictionary = {}
@@ -209,6 +211,44 @@ static func mitigation(defense: float) -> float:
 func ability(slot: String) -> Dictionary:
 	return abilities.get(hero_id+"."+slot,{})
 
+func switch_hero(new_hero: String) -> Dictionary:
+	if hero_switch_cooldown > 0: return {"ok":false, "reason":"Switch on cooldown"}
+	if not heroes.has(new_hero): return {"ok":false, "reason":"Unknown hero"}
+	if new_hero == hero_id: return {"ok":false, "reason":"Already active"}
+	# Store current hero state
+	inactive_heroes[hero_id] = {
+		"pos": pos,
+		"hp": hp,
+		"energy": energy,
+		"respawn_left": respawn_left,
+		"cooldowns": cooldowns.duplicate(),
+		"potion_cd": potion_cd,
+		"potion_ticks": potion_ticks,
+		"potion_tick_left": potion_tick_left,
+		"shield": shield,
+		"shield_left": shield_left,
+		"invulnerable_left": 2.0  # Brief invulnerability on switch
+	}
+	# Switch to new hero
+	hero_id = new_hero
+	var saved = inactive_heroes.get(new_hero, {})
+	pos = saved.get("pos", START)
+	hp = saved.get("hp", stats.max_hp)
+	energy = saved.get("energy", stats.max_energy)
+	respawn_left = saved.get("respawn_left", 0.0)
+	cooldowns = saved.get("cooldowns", {"Q":0.0,"W":0.0,"E":0.0,"R":0.0})
+	potion_cd = saved.get("potion_cd", 0.0)
+	potion_ticks = saved.get("potion_ticks", 0)
+	potion_tick_left = saved.get("potion_tick_left", 0.0)
+	shield = saved.get("shield", 0)
+	shield_left = saved.get("shield_left", 0)
+	invulnerable_left = maxf(invulnerable_left, 2.0)
+	recalculate_stats()
+	hero_switch_cooldown = 3.0
+	announce("Switched to %s" % heroes[hero_id].get("name", hero_id))
+	log_event("hero_switch", {"hero": hero_id})
+	return {"ok":true, "reason":"Switched"}
+
 func announce(text: String):
 	notice = text
 	notice_left = 5.0
@@ -330,6 +370,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 	notice_left = maxf(0,notice_left-dt)
 	for key in cooldowns: cooldowns[key] = maxf(0,cooldowns[key]-dt)
 	potion_cd = maxf(0,potion_cd-dt)
+	hero_switch_cooldown = maxf(0,hero_switch_cooldown-dt)
 	arcanist_passive_cd = maxf(0,arcanist_passive_cd-dt)
 	sanctuary_cd = maxf(0,sanctuary_cd-dt)
 	ranger_buff = maxf(0,ranger_buff-dt)

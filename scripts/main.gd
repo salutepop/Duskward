@@ -428,6 +428,11 @@ func _input(event: InputEvent) -> void:
 				_open_modal("shop")
 			elif key == KEY_ENTER and _is_preparation():
 				_next_wave()
+			elif key == KEY_TAB:
+				var heroes_list = ["guardian", "ranger", "arcanist"]
+				var current_idx = heroes_list.find(model.hero_id)
+				var next_idx = (current_idx + 1) % heroes_list.size()
+				model.switch_hero(heroes_list[next_idx])
 	elif event is InputEventScreenTouch:
 		if event.pressed:
 			var slot: String = _skill_at(event.position)
@@ -1370,6 +1375,17 @@ func _draw_hud() -> void:
 	art.hero(self,Vector2(66,94),model.hero_id,Vector2.RIGHT,time,1.0,false,ui_paint.x)
 	_label(HERO_NAMES[model.hero_id],Vector2(108,46),22,PAPER)
 	_label(_t("common.level",{"level":model.level}),Vector2(344,46),18,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
+	# Hero switch indicators
+	var hero_icons = [Vector2(380, 22), Vector2(420, 22), Vector2(460, 22)]
+	for i in range(HERO_IDS.size()):
+		var hid = HERO_IDS[i]
+		var icon_pos = hero_icons[i]
+		var is_active = hid == model.hero_id
+		var can_switch = not is_active and model.hero_switch_cooldown <= 0
+		var col = Color(1,1,1,1) if is_active else (Color(0.5,0.5,0.5,0.6) if model.hero_switch_cooldown > 0 else Color(0.8,0.8,0.8,0.9))
+		art.hero(self, icon_pos + Vector2(12,12), hid, Vector2.RIGHT, time, 0.4 if not is_active else 0.6, false, col.a)
+		if not is_active and model.hero_switch_cooldown > 0:
+			_panel(Rect2(icon_pos, Vector2(24, 24)), Color(0,0,0,0.5), Color(0.3,0.3,0.3,0.8), 2)
 	_bar(Rect2(108,56,236,25),model.hp,float(model.stats.max_hp),HP_FILL,"HP %d / %d" % [model.hp,model.stats.max_hp],19)
 	_bar(Rect2(108,92,236,24),model.energy,float(model.stats.max_energy),MANA_FILL,_t("hud.mana_value",{"current":int(model.energy),"max":int(model.stats.max_energy)}),18)
 	if model.shield>0:

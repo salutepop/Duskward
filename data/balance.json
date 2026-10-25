@@ -1284,6 +1284,27 @@
       "sell_price": 90,
       "max_per_slot": 3,
       "mvp": true
+    },
+    {
+      "id": "war_hammer",
+      "name_ko": "\uc804\uc7c1\ub9dd\uce58",
+      "tier": 2,
+      "total_price": 600,
+      "craft_fee": 250,
+      "recipe": {
+        "iron_blade": 2,
+        "armor_plate": 1
+      },
+      "stats": {
+        "ad": 35,
+        "crit_chance": 0.15
+      },
+      "passive": null,
+      "unique_group": "none",
+      "unlock_after_wave": 2,
+      "sell_price": 360,
+      "max_per_slot": 1,
+      "mvp": true
     }
   ],
   "combat": {
