@@ -822,6 +822,16 @@ func _step_enemies(dt: float):
 						other.hp = minf(other.max_hp, other.hp + 20)
 						_effect("heal", other.pos, 1.0, 0.4)
 				_effect("heal", e.pos, 2.0, 0.5)
+		if e.kind == "summoner":
+			e.summon_timer = maxf(0, float(e.get("summon_timer",0.0)) - dt)
+			if e.summon_timer <= 0 and enemies.size() < 55:
+				e.summon_timer = 5.0
+				spawn_enemy("crawler", clamp_position(e.pos + Vector2(1,0)), false)
+				_effect("summon", e.pos, 2.0, 0.6)
+		if e.kind == "flyer":
+			e.pos.y -= float(e.speed) * dt * 0.3
+			e.pos.y = maxf(4.0, e.pos.y)
+			e.pos = clamp_position(e.pos)
 		if e.telegraph>0:
 			e.telegraph -= dt
 			if e.telegraph<=0: _enemy_attack(e)

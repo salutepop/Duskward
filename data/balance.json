@@ -413,6 +413,28 @@
       "armor": 0,
       "magic_resist": 0,
       "castle_multiplier": 0.35
+    },
+    {
+      "id": "summoner",
+      "cost": 4,
+      "hp": 180,
+      "damage": 8,
+      "interval": 2.5,
+      "speed": 1.6,
+      "armor": 0,
+      "magic_resist": 0,
+      "castle_multiplier": 0.35
+    },
+    {
+      "id": "flyer",
+      "cost": 3,
+      "hp": 140,
+      "damage": 12,
+      "interval": 1.8,
+      "speed": 3.5,
+      "armor": 0,
+      "magic_resist": 0,
+      "castle_multiplier": 0.35
     }
   ],
   "waves": [

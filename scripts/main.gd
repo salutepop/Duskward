@@ -212,7 +212,7 @@ func _process(delta: float) -> void:
 			skill_pointer.clear()
 		if model.hp < last_hp:
 			screen_shake = 0.55
-			_sound(145.0,0.08,0.045)
+			_sound_variant(145.0, 0.2)
 		last_hp = model.hp
 		_update_combat_feedback()
 		if model.phase == "Victory" or model.phase == "Defeat":
@@ -375,6 +375,9 @@ func _setup_audio() -> void:
 	audio = AudioStreamPlayer.new()
 	audio.volume_db = -4.0
 	add_child(audio)
+
+func _sound_variant(base_freq: float, variance: float = 0.15) -> void:
+	_sound(base_freq + base_freq * randf_range(-variance, variance), 0.08 + randf_range(-0.02, 0.02), 0.055)
 
 func _sound(frequency: float = 560.0, duration: float = 0.08, volume: float = 0.055) -> void:
 	if not sound_enabled or not is_instance_valid(audio): return
@@ -660,7 +663,7 @@ func _action(action: String, value: String) -> void:
 				_notify(_t("shop.combined" if not visible_quote.ingredients.is_empty() else "shop.bought",{"item":_item_name(selected_item)}))
 				selected_slot = -1
 				model.save_checkpoint()
-				_sound(820, 0.13)
+				_sound_variant(820, 0.1)
 				# A second tap may reuse an unchanged quote (e.g. another potion),
 				# but a consumed recipe must be repainted before another charge.
 				if visible_quote != _shop_quote_signature(): _invalidate_hits()
@@ -736,7 +739,7 @@ func _is_preparation() -> bool:
 
 func _next_wave() -> void:
 	if model.start_next_wave():
-		_sound(270, 0.25, 0.06)
+		_sound_variant(270, 0.15)
 		_phase_changed()
 
 func _phase_changed() -> void:
@@ -774,7 +777,7 @@ func _cast(slot: String, aim: Vector2 = Vector2.ZERO) -> void:
 func _potion() -> void:
 	if model.use_potion():
 		_notify(_t("potion.used"))
-		_sound(720,0.2)
+		_sound_variant(720, 0.1)
 	else:
 		var key: String = "potion.unavailable"
 		if model.respawn_left>0: key="potion.dead"
