@@ -606,6 +606,96 @@
       "solo_cumulative_gold": 3675,
       "solo_cumulative_xp": 6775,
       "team_level_after_wave": 12
+    },
+    {
+      "wave": 11,
+      "budget": 80,
+      "solo_counts": {
+        "crawler": 19,
+        "shooter": 6,
+        "guard": 6,
+        "siege": 2
+      },
+      "solo_total_count": 33,
+      "hp_wave_multiplier": 2.36,
+      "damage_wave_multiplier": 1.98,
+      "solo_gold_increment": 572,
+      "solo_xp_increment": 1144,
+      "solo_cumulative_gold": 4247,
+      "solo_cumulative_xp": 7919,
+      "team_level_after_wave": 13
+    },
+    {
+      "wave": 12,
+      "budget": 88,
+      "solo_counts": {
+        "crawler": 20,
+        "shooter": 6,
+        "guard": 6,
+        "siege": 2
+      },
+      "solo_total_count": 34,
+      "hp_wave_multiplier": 2.46,
+      "damage_wave_multiplier": 2.06,
+      "solo_gold_increment": 622,
+      "solo_xp_increment": 1174,
+      "solo_cumulative_gold": 4869,
+      "solo_cumulative_xp": 9093,
+      "team_level_after_wave": 14
+    },
+    {
+      "wave": 13,
+      "budget": 96,
+      "solo_counts": {
+        "crawler": 22,
+        "shooter": 7,
+        "guard": 7,
+        "siege": 2
+      },
+      "solo_total_count": 38,
+      "hp_wave_multiplier": 2.56,
+      "damage_wave_multiplier": 2.14,
+      "solo_gold_increment": 672,
+      "solo_xp_increment": 1204,
+      "solo_cumulative_gold": 5541,
+      "solo_cumulative_xp": 10297,
+      "team_level_after_wave": 15
+    },
+    {
+      "wave": 14,
+      "budget": 104,
+      "solo_counts": {
+        "crawler": 23,
+        "shooter": 7,
+        "guard": 7,
+        "siege": 2
+      },
+      "solo_total_count": 39,
+      "hp_wave_multiplier": 2.66,
+      "damage_wave_multiplier": 2.22,
+      "solo_gold_increment": 722,
+      "solo_xp_increment": 1234,
+      "solo_cumulative_gold": 6263,
+      "solo_cumulative_xp": 11531,
+      "team_level_after_wave": 16
+    },
+    {
+      "wave": 15,
+      "budget": 112,
+      "solo_counts": {
+        "crawler": 25,
+        "shooter": 8,
+        "guard": 8,
+        "siege": 2
+      },
+      "solo_total_count": 43,
+      "hp_wave_multiplier": 2.76,
+      "damage_wave_multiplier": 2.3,
+      "solo_gold_increment": 772,
+      "solo_xp_increment": 1264,
+      "solo_cumulative_gold": 7035,
+      "solo_cumulative_xp": 12795,
+      "team_level_after_wave": 17
     }
   ],
   "level_thresholds": [

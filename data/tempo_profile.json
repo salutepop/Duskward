@@ -126,6 +126,41 @@
       "shooter": 10,
       "guard": 6,
       "siege": 4
+    },
+    {
+      "crawler": 30,
+      "skirmisher": 8,
+      "shooter": 11,
+      "guard": 6,
+      "siege": 4
+    },
+    {
+      "crawler": 30,
+      "skirmisher": 8,
+      "shooter": 11,
+      "guard": 6,
+      "siege": 4
+    },
+    {
+      "crawler": 30,
+      "skirmisher": 8,
+      "shooter": 11,
+      "guard": 6,
+      "siege": 4
+    },
+    {
+      "crawler": 30,
+      "skirmisher": 8,
+      "shooter": 11,
+      "guard": 6,
+      "siege": 4
+    },
+    {
+      "crawler": 30,
+      "skirmisher": 8,
+      "shooter": 11,
+      "guard": 6,
+      "siege": 4
     }
   ],
   "wave_budgets": [

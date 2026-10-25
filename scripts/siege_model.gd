@@ -85,6 +85,7 @@ var defenders: Array = []
 var allies: Array = []
 var special_event: Dictionary = {}
 var enhanced_items: Dictionary = {}
+var _active_set_effects: Dictionary = {}
 var hunt: Dictionary = {}
 var _combat_stats = preload("res://scripts/models/combat_stats.gd")
 var rng = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
@@ -177,6 +178,25 @@ func reset(new_hero: String, new_seed: int = 12345):
 
 func recalculate_stats():
 	stats = _combat_stats.derived_stats(heroes, items, hero_id, level, inventory)
+	# Set effects
+	_active_set_effects = {}
+	var set_counts: Dictionary = {}
+	for id in inventory:
+		var item = items.get(id, {})
+		var group = item.get("unique_group", "none")
+		if group != "none":
+			set_counts[group] = int(set_counts.get(group, 0)) + 1
+	# Apply set bonuses
+	if set_counts.get("lifesteal_highest", 0) >= 2:
+		_active_set_effects["lifesteal_highest"] = true
+		if not stats.has("lifesteal"): stats.lifesteal = 0
+		stats.lifesteal = float(stats.lifesteal) + 0.15
+		announce("SET EFFECT: Vampire's Pact +15% Lifesteal")
+	if set_counts.get("fortress_aura_highest", 0) >= 2:
+		_active_set_effects["fortress_aura_highest"] = true
+		if not stats.has("damage_reduction"): stats.damage_reduction = 0
+		stats.damage_reduction = float(stats.damage_reduction) + 0.12
+		announce("SET EFFECT: Fortress Aura +12% Damage Reduction")
 	hp = minf(hp, stats.max_hp)
 	energy = minf(energy, stats.max_energy)
 
@@ -210,7 +230,7 @@ func start_next_wave() -> bool:
 	if phase != "Preparation": return false
 	save_checkpoint()
 	wave = completed_wave+1
-	if wave > 10: return false
+	if wave > 15: return false
 	phase = "Combat"
 	_prepare_hunt()
 	# Special event after wave 3 and 7
@@ -266,12 +286,12 @@ func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: 
 		e.damage *= 1.5
 		e.speed *= 0.9
 		e.cost = 3
-		var w = data.waves[clampi(wave-1,0,9)]
+		var w = data.waves[clampi(wave-1,0,14)]
 		e.hp *= float(w.hp_wave_multiplier)
 		e.damage *= float(w.damage_wave_multiplier)
 	else:
 		e = enemy_types[kind].duplicate(true)
-		var w2 = data.waves[clampi(wave-1,0,9)]
+		var w2 = data.waves[clampi(wave-1,0,14)]
 		e.hp *= float(w2.hp_wave_multiplier)
 		e.damage *= float(w2.damage_wave_multiplier)
 	e.id = next_entity_id
