@@ -228,7 +228,7 @@ func start_next_wave() -> bool:
 	spawn_was_capped = false
 	if ruleset=="fast":
 		for i in mini(int(tempo.initial_spawn_count),spawn_queue.size()):
-			spawn_enemy(spawn_queue.pop_front(),Vector2(92,spawn_rng.randf_range(8,40)))
+			spawn_enemy(spawn_queue.pop_front(),Vector2(112,spawn_rng.randf_range(8,40)))
 		spawn_timer = float(tempo.spawn_interval_seconds)
 	announce("WAVE %d  •  %d invaders incoming" % [wave,spawn_queue.size()+enemies.size()])
 	log_event("wave_start",{"wave":wave,"base_hp":base_hp})
@@ -326,7 +326,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 			spawn_timer = 0.0
 			spawn_was_capped = true
 		elif spawn_timer<=due_epsilon and enemies.size()<60:
-			spawn_enemy(spawn_queue.pop_front(),Vector2(92,spawn_rng.randf_range(8,40)))
+			spawn_enemy(spawn_queue.pop_front(),Vector2(112,spawn_rng.randf_range(8,40)))
 			if ruleset=="fast":
 				var interval: float = float(tempo.spawn_interval_seconds)
 				spawn_timer = interval if spawn_was_capped else spawn_timer+interval
