@@ -809,6 +809,9 @@ func _draw() -> void:
 	paint_regions=_occlusion_regions()
 	paint_controls=control_painted_rects()
 	hits.clear()
+	if screen_shake > 0:
+		var shake_offset = Vector2(randf_range(-screen_shake*8,screen_shake*8),randf_range(-screen_shake*6,screen_shake*6))
+		draw_set_transform(shake_offset,0,Vector2.ONE)
 	draw_rect(Rect2(Vector2.ZERO, SIZE), INK)
 	if mode == "title":
 		_draw_title()
@@ -824,6 +827,7 @@ func _draw() -> void:
 			_panel(Rect2(425, 138, 430, 46), Color(0.04,0.10,0.14,alpha * 0.90), Color(0.7,0.6,0.35,alpha))
 			_label(banner, Vector2(640, 169), 22, Color(0.96,0.85,0.6,alpha), HORIZONTAL_ALIGNMENT_CENTER)
 			ui_paint=Vector3.ONE
+	draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
 	if modal != "":
 		draw_rect(Rect2(Vector2.ZERO, SIZE), Color(0.02,0.025,0.02,0.66))
 		hits.clear()
