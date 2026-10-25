@@ -278,6 +278,7 @@ func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: 
 	e.hidden = false
 	if kind in ["crawler","skirmisher"] and rng.randf() < 0.15:
 		e.hidden = true
+		e.reveal_distance = 4.0
 	enemies.append(e)
 	return e
 
@@ -788,6 +789,9 @@ func _step_enemies(dt: float):
 		if e.get("hunt_enemy",false):
 			_step_hunt_enemy(e,dt)
 			continue
+		if e.get("hidden",false) and e.pos.distance_to(pos) <= float(e.get("reveal_distance",4.0)):
+			e.hidden = false
+			announce("Hidden enemy revealed!")
 		if e.telegraph>0:
 			e.telegraph -= dt
 			if e.telegraph<=0: _enemy_attack(e)
