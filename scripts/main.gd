@@ -1330,7 +1330,9 @@ func _draw_minimap() -> void:
 	for e in model.enemies:
 		var mx: float = mm_rect.position.x + 5 + (e.pos.x / 96.0) * (mm_rect.size.x - 10)
 		var my: float = mm_rect.position.y + 5 + (e.pos.y / 48.0) * (mm_rect.size.y - 10)
-		draw_circle(Vector2(mx,my), 2.0, RED)
+		var r: float = 2.0 if str(e.kind)=="elite" else 2.0
+		var col: Color = Color(0.8,0.2,0.2) if str(e.kind)=="elite" else RED
+		draw_circle(Vector2(mx,my), r, col)
 	# 동료 표시
 	for ally in model.allies:
 		var ax: float = mm_rect.position.x + 5 + (ally.pos.x / 96.0) * (mm_rect.size.x - 10)
