@@ -83,6 +83,7 @@ var boss_add_timer = 0.0
 var content_hash = ""
 var defenders: Array = []
 var allies: Array = []
+var special_event: Dictionary = {}
 var enhanced_items: Dictionary = {}
 var hunt: Dictionary = {}
 var _combat_stats = preload("res://scripts/models/combat_stats.gd")
@@ -171,6 +172,7 @@ func reset(new_hero: String, new_seed: int = 12345):
 	hunt = {}
 	_reset_defenders()
 	_reset_allies()
+	special_event = {}
 	announce("Choose your gear. The first wave starts when you are ready.")
 
 func recalculate_stats():
@@ -211,6 +213,9 @@ func start_next_wave() -> bool:
 	if wave > 10: return false
 	phase = "Combat"
 	_prepare_hunt()
+	# Special event after wave 3 and 7
+	if completed_wave in [3,7] and not special_event.get("active",false):
+		_trigger_special_event()
 	var w = data.waves[wave-1]
 	spawn_queue = []
 	var explicit_counts: bool = ruleset=="fast" and tempo.has("wave_counts")
@@ -362,6 +367,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 				spawn_timer = 0.9
 			spawn_was_capped = false
 	if phase == "Boss": _step_boss(dt)
+	if phase == "SpecialEvent": _step_special_event(dt)
 	_step_hunt_clock(dt)
 	_step_defenders(dt)
 	_step_allies(dt)
@@ -1478,6 +1484,41 @@ func _observe_pressure() -> void:
 		if enemy.hp>0 and enemy.pos.distance_to(pos)<=8: nearby += 1
 	metrics.peak_enemies = maxi(int(metrics.peak_enemies),main_enemy_count())
 	metrics.peak_nearby_8m = maxi(int(metrics.peak_nearby_8m),nearby)
+
+func _trigger_special_event() -> void:
+	phase = "SpecialEvent"
+	special_event = {"active":true,"enemies_spawned":0,"max_enemies":20,"timer":0.0,"duration":45.0}
+	announce("SPECIAL EVENT  •  Bonus arena! Kill all enemies for extra rewards!")
+	log_event("special_event_start",{"wave":completed_wave})
+	for i in 8:
+		spawn_enemy("crawler",_spawn_position(),false)
+		special_event["enemies_spawned"] += 1
+	for i in 4:
+		spawn_enemy("shooter",_spawn_position(),false)
+		special_event["enemies_spawned"] += 1
+	for i in 2:
+		spawn_enemy("guard",_spawn_position(),false)
+		special_event["enemies_spawned"] += 1
+
+func _step_special_event(dt: float) -> void:
+	if phase != "SpecialEvent": return
+	special_event["timer"] += dt
+	if special_event["timer"] >= special_event["duration"] or enemies.size() == 0:
+		var bonus_gold: int = 200 + completed_wave * 50
+		var bonus_xp: int = 150 + completed_wave * 30
+		gold += bonus_gold
+		xp += bonus_xp
+		metrics.gold_earned += bonus_gold
+		announce("SPECIAL EVENT CLEAR  •  +%d gold, +%d xp" % [bonus_gold, bonus_xp])
+		log_event("special_event_end",{"wave":completed_wave,"gold":bonus_gold,"xp":bonus_xp})
+		phase = "Preparation"
+		special_event = {}
+		return
+	# Spawn more enemies over time
+	if special_event["timer"] % 5.0 < dt and special_event["enemies_spawned"] < special_event["max_enemies"]:
+		var kinds = ["crawler","crawler","skirmisher","shooter"]
+		spawn_enemy(kinds[spawn_rng.randi() % kinds.size()],_spawn_position(),false)
+		special_event["enemies_spawned"] += 1
 
 func _prepare_hunt() -> void:
 	hunt = {}
