@@ -1330,7 +1330,7 @@ func _draw_defenders() -> void:
 			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
 func _draw_minimap() -> void:
-	var mm_rect = Rect2(1080, 50, 180, 120)
+	var mm_rect = Rect2(1060, 580, 200, 120)
 	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
 	# 맵 경계
 	draw_rect(Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10)), Color(0.15,0.2,0.15,0.3), false, 1)
