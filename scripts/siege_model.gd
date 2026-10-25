@@ -1419,6 +1419,11 @@ func _step_allies(dt: float) -> void:
 				distance = candidate
 				target = enemy
 		if target.is_empty(): continue
+		# 동료 이동: 적에게 접근
+		var to_target: Vector2 = (target.pos-ally.pos)
+		if to_target.length() > 6.0:
+			ally.pos += to_target.normalized()*3*dt
+			ally.pos = clamp_position(ally.pos)
 		var direction: Vector2 = (target.pos-ally.pos).normalized()
 		if direction==Vector2.ZERO: direction = Vector2.RIGHT
 		projectiles.append({"pos":ally.pos,"previous":ally.pos,"velocity":direction*22.0,"hostile":false,"radius":0.15,"life":0.8,"damage":float(ally.get("ad",30)),"damage_type":"physical","target_id":target.id,"basic":false,"hero":ally.hero,"source":"ally"})
