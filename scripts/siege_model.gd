@@ -303,8 +303,12 @@ func start_next_wave() -> bool:
 	# Special event after wave 3 and 7
 	if completed_wave in [3,7] and not special_event.get("active",false):
 		_trigger_special_event()
-	var w = data.waves[wave-1]
+	var w = data.waves[clampi(wave-1,0,data.waves.size()-1)]
 	wave_modifier = str(w.get("modifier",""))
+	# Fallback: apply a random modifier every 3 waves after wave 10
+	if wave_modifier == "" and wave > 10 and (wave - 10) % 3 == 0:
+		var modifiers = ["elite_rush","healer_wave","siege_priority","speed_rush","shield_wall","mixed_assault","ambush"]
+		wave_modifier = modifiers[rng.randi() % modifiers.size()]
 	spawn_queue = []
 	var explicit_counts: bool = ruleset=="fast" and tempo.has("wave_counts")
 	var counts: Dictionary = tempo.wave_counts[wave-1] if explicit_counts else w.solo_counts
@@ -332,8 +336,6 @@ func start_next_wave() -> bool:
 	# register elite in enemy_types for rendering
 	announce("WAVE %d  •  %d invaders incoming" % [wave,spawn_queue.size()+enemies.size()])
 	# Apply wave modifiers
-	wave_reinforcement_timer = 0.0
-	wave_reinforcement_count = 0
 	if wave_modifier == "elite_rush":
 		var elite_count = 0
 		for i in range(spawn_queue.size()):
@@ -353,6 +355,36 @@ func start_next_wave() -> bool:
 				siege_count += 1
 		if siege_count > 0:
 			announce("SIEGE PRIORITY  •  %d siege units incoming!" % siege_count)
+	elif wave_modifier == "speed_rush":
+		var skirmish_count = 0
+		for i in range(spawn_queue.size()):
+			if spawn_queue[i] == "crawler" and skirmish_count < 5:
+				spawn_queue[i] = "skirmisher"
+				skirmish_count += 1
+		if skirmish_count > 0:
+			announce("SPEED RUSH  •  Fast skirmishers incoming!")
+	elif wave_modifier == "shield_wall":
+		for i in 4: spawn_queue.append("guard")
+		announce("SHIELD WALL  •  Heavy guards deployed!")
+	elif wave_modifier == "mixed_assault":
+		var mixed_elite = 0
+		var mixed_siege = 0
+		for i in range(spawn_queue.size()):
+			if spawn_queue[i] == "crawler" and mixed_elite < 2:
+				spawn_queue[i] = "elite"
+				mixed_elite += 1
+			elif spawn_queue[i] == "crawler" and mixed_siege < 2:
+				spawn_queue[i] = "siege"
+				mixed_siege += 1
+		if mixed_elite + mixed_siege > 0:
+			announce("MIXED ASSAULT  •  Elites and siege units incoming!")
+	elif wave_modifier == "ambush":
+		for i in range(spawn_queue.size()):
+			if spawn_queue[i] in ["crawler","skirmisher","shooter"]:
+				spawn_queue[i] = "crawler"  # keep as crawler but spawn hidden
+		announce("AMBUSH  •  Hidden enemies approaching!")
+		# All enemies in this wave spawn hidden
+		for i in 5: spawn_queue.append("crawler")
 	log_event("wave_start",{"wave":wave,"base_hp":base_hp,"modifier":wave_modifier})
 	return true
 
@@ -390,12 +422,12 @@ func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: 
 		e.damage *= 1.5
 		e.speed *= 0.9
 		e.cost = 3
-		var w = data.waves[clampi(wave-1,0,14)]
+		var w = data.waves[clampi(wave-1,0,data.waves.size()-1)]
 		e.hp *= float(w.hp_wave_multiplier)
 		e.damage *= float(w.damage_wave_multiplier)
 	else:
 		e = enemy_types[kind].duplicate(true)
-		var w2 = data.waves[clampi(wave-1,0,14)]
+		var w2 = data.waves[clampi(wave-1,0,data.waves.size()-1)]
 		e.hp *= float(w2.hp_wave_multiplier)
 		e.damage *= float(w2.damage_wave_multiplier)
 	e.id = next_entity_id
