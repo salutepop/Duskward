@@ -157,6 +157,7 @@
     "item.passive.potion_note": "영웅만 회복 · 장비 슬롯 사용 안 함",
     "item.passive.lifesteal": "기본 공격 피해에 비례해 자신의 HP 회복",
     "item.passive.lifesteal_note": "흡혈은 가장 높은 수치만 적용됩니다.",
+    "item.dropped": "획득: {item}",
     "potion.used": "회복 물약 사용",
     "potion.healing": "3초 동안 HP 회복",
     "potion.empty": "회복 물약이 없습니다.",

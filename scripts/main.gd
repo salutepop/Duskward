@@ -7,7 +7,7 @@ const QAController = preload("res://scripts/qa_autoplay.gd")
 const SIZE = Vector2(1280, 720)
 const FIXED_STEP_SECONDS = 1.0 / 30.0
 const FRAME_DELTA_CAP_SECONDS = 0.15
-const MAP = Rect2(0, 40, 1600, 640)
+const MAP = Rect2(0, 40, 1920, 480)
 const INK = Color("111615")
 const PANEL = Color("1b211e")
 const LINE = Color("53584b")
@@ -404,7 +404,7 @@ func _movement() -> Vector2:
 		keyboard += Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
 	var screen_direction: Vector2 = joystick if joystick.length() > 0.05 else keyboard.limit_length()
 	# Inverse project input so a diagonal stick points where the hero actually travels.
-	var inverse_projected: Vector2 = Vector2(screen_direction.x,screen_direction.y*(MAP.size.x/96.0)/(MAP.size.y/48.0))
+	var inverse_projected: Vector2 = Vector2(screen_direction.x,screen_direction.y*(MAP.size.x/48.0)/(MAP.size.y/24.0))
 	return inverse_projected.normalized()*minf(1.0,screen_direction.length())
 
 func _input(event: InputEvent) -> void:
@@ -544,7 +544,7 @@ func _skill_target() -> Vector2:
 	var delta: Vector2 = Vector2(skill_pointer.position)-Vector2(skill_pointer.origin)
 	var reach: float = _aim_range(str(skill_pointer.slot))
 	if delta.length()<16 or reach==0: return Vector2.ZERO
-	var direction: Vector2 = Vector2(delta.x,delta.y*(MAP.size.x/96.0)/(MAP.size.y/48.0)).normalized()
+	var direction: Vector2 = Vector2(delta.x,delta.y*(MAP.size.x/48.0)/(MAP.size.y/24.0)).normalized()
 	var directional: bool = model.hero_id+"."+str(skill_pointer.slot) in ["guardian.Q","ranger.Q","ranger.E"]
 	var distance: float = reach if directional else reach*clampf(delta.length()/85.0,0,1)
 	return model.pos+direction*distance
@@ -810,7 +810,7 @@ func _reason(reason: String) -> String:
 	return reason
 
 func _world(p: Vector2) -> Vector2:
-	return MAP.position + Vector2(p.x / 96.0 * MAP.size.x, p.y / 48.0 * MAP.size.y)
+	return MAP.position + Vector2(p.x / 48.0 * MAP.size.x, p.y / 24.0 * MAP.size.y)
 
 func _draw() -> void:
 	ui_paint=Vector3.ONE
@@ -829,7 +829,7 @@ func _draw() -> void:
 		_draw_controls()
 		_draw_status_strip()
 		_draw_minimap()
-		if banner_time > 0 and modal == "" and str(_status_content().title)=="":
+		if banner_time > 0 and modal == "" and not (model.phase in ["Combat", "Boss", "BossIntro", "FinalPreparation"] and str(_status_content().title) != ""):
 			var alpha: float = minf(1, banner_time)
 			_set_ui_paint(Rect2(425,138,430,46))
 			_panel(Rect2(425, 138, 430, 46), Color(0.04,0.10,0.14,alpha * 0.90), Color(0.7,0.6,0.35,alpha))
@@ -1336,23 +1336,23 @@ func _draw_minimap() -> void:
 	draw_rect(Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10)), Color(0.15,0.2,0.15,0.3), false, 1)
 	# 적 표시
 	for e in model.enemies:
-		var mx: float = mm_rect.position.x + 5 + (e.pos.x / 96.0) * (mm_rect.size.x - 10)
-		var my: float = mm_rect.position.y + 5 + (e.pos.y / 48.0) * (mm_rect.size.y - 10)
+		var mx: float = mm_rect.position.x + 5 + (e.pos.x / 48.0) * (mm_rect.size.x - 10)
+		var my: float = mm_rect.position.y + 5 + (e.pos.y / 24.0) * (mm_rect.size.y - 10)
 		var r: float = 2.0 if str(e.kind)=="elite" else 2.0
 		var col: Color = Color(0.8,0.2,0.2) if str(e.kind)=="elite" else RED
 		draw_circle(Vector2(mx,my), r, col)
 	# 동료 표시
 	for ally in model.allies:
-		var ax: float = mm_rect.position.x + 5 + (ally.pos.x / 96.0) * (mm_rect.size.x - 10)
-		var ay: float = mm_rect.position.y + 5 + (ally.pos.y / 48.0) * (mm_rect.size.y - 10)
+		var ax: float = mm_rect.position.x + 5 + (ally.pos.x / 48.0) * (mm_rect.size.x - 10)
+		var ay: float = mm_rect.position.y + 5 + (ally.pos.y / 24.0) * (mm_rect.size.y - 10)
 		draw_circle(Vector2(ax,ay), 2.5, TEAL)
 	# 영웅 표시
-	var hx: float = mm_rect.position.x + 5 + (model.pos.x / 96.0) * (mm_rect.size.x - 10)
-	var hy: float = mm_rect.position.y + 5 + (model.pos.y / 48.0) * (mm_rect.size.y - 10)
+	var hx: float = mm_rect.position.x + 5 + (model.pos.x / 48.0) * (mm_rect.size.x - 10)
+	var hy: float = mm_rect.position.y + 5 + (model.pos.y / 24.0) * (mm_rect.size.y - 10)
 	draw_circle(Vector2(hx,hy), 3.0, GOLD)
 	# 베이스 표시
-	var bx: float = mm_rect.position.x + 5 + (4.0 / 96.0) * (mm_rect.size.x - 10)
-	var by: float = mm_rect.position.y + 5 + (12.0 / 48.0) * (mm_rect.size.y - 10)
+	var bx: float = mm_rect.position.x + 5 + (4.0 / 48.0) * (mm_rect.size.x - 10)
+	var by: float = mm_rect.position.y + 5 + (12.0 / 24.0) * (mm_rect.size.y - 10)
 	draw_circle(Vector2(bx,by), 3.0, Color(0.9,0.7,0.3))
 func _notice_text(notice: String) -> String:
 	var key: String = copy.notice_key(notice)

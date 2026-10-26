@@ -308,11 +308,11 @@ func start_next_wave() -> bool:
 
 func _spawn_position() -> Vector2:
 	var roll: float = spawn_rng.randf()
-	if roll < 0.4:
-		return Vector2(92,spawn_rng.randf_range(8,40))
-	elif roll < 0.7:
-		return Vector2(spawn_rng.randf_range(20,88),4)
-	return Vector2(spawn_rng.randf_range(20,88),44)
+	if roll < 0.33:
+		return Vector2(44,spawn_rng.randf_range(4,20))
+	if roll < 0.66:
+		return Vector2(spawn_rng.randf_range(4,42),2)
+	return Vector2(spawn_rng.randf_range(4,42),22)
 
 func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: RandomNumberGenerator = null) -> Dictionary:
 	var e: Dictionary
@@ -474,7 +474,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 		_clear_wave()
 
 func clamp_position(p: Vector2) -> Vector2:
-	return Vector2(clampf(p.x,2,94),clampf(p.y,2,46))
+	return Vector2(clampf(p.x,2,46),clampf(p.y,2,22))
 
 func _clear_wave():
 	if completed_wave >= wave: return
@@ -678,18 +678,24 @@ func _resolve_deaths():
 			metrics.total_kills += 1
 			metrics.wave_kills += 1
 			_update_level()
-			# 아이템 드롭 (20% 확률)
-			if rng.randf() < 0.2:
-				var drop_tier = 1 if rng.randf() < 0.7 else (2 if rng.randf() < 0.9 else 3)
-				var tier_items = []
+			# 아이템 드롭 (레벨/웨이브 제한 있음)
+			var drop_chance: float = 0.12
+			if rng.randf() < drop_chance:
+				var max_drop_tier: int = 1
+				if level >= 5 and completed_wave >= 3: max_drop_tier = 2
+				if level >= 10 and completed_wave >= 7: max_drop_tier = 3
+				var allowed_tiers: Array = []
+				for t in range(1, max_drop_tier + 1): allowed_tiers.append(t)
+				var drop_tier: int = allowed_tiers[rng.randi() % allowed_tiers.size()]
+				var tier_items: Array = []
 				for id in items:
-					if items[id].get("tier",0) == drop_tier and id != "healing_potion":
+					if items[id].get("tier", 0) == drop_tier and id != "healing_potion" and level >= int(items[id].get("unlock_level", 1)) and completed_wave >= int(items[id].get("unlock_after_wave", 0)):
 						tier_items.append(id)
 				if not tier_items.is_empty():
-					var drop_id = tier_items[rng.randi() % tier_items.size()]
+					var drop_id: String = tier_items[rng.randi() % tier_items.size()]
 					if not inventory.has(drop_id) and inventory.size() < 6:
 						inventory.append(drop_id)
-						announce("ITEM DROP: " + drop_id)
+						announce("획득: " + (items[drop_id].get("name_ko", drop_id)))
 	enemies = alive
 
 func cast(slot: String, aim: Vector2 = Vector2.ZERO) -> bool:
@@ -1512,7 +1518,7 @@ func _reset_allies() -> void:
 		allies.append(a)
 
 func _step_allies(dt: float) -> void:
-	if phase not in ["Combat","Boss"]: return
+	if phase not in ["Combat", "Boss"]: return
 	for ally in allies:
 		ally.flash = maxf(0,float(ally.flash)-dt)
 		if ally.hp<=0:
@@ -1521,32 +1527,26 @@ func _step_allies(dt: float) -> void:
 				ally.hp = ally.max_hp
 				ally.attack_left = 0.5
 			continue
-		ally.attack_left -= dt
-		if ally.attack_left>0: continue
-		# AI: 가장 가까운 적 공격
+		# Always chase nearest enemy so allies do not stand still.
 		var target: Dictionary = {}
-		var distance: float = 12.0
+		var distance: float = 16.0
 		for enemy in enemies:
 			if enemy.hp<=0 or enemy.get("hunt_enemy",false): continue
 			var candidate: float = ally.pos.distance_to(enemy.pos)
 			if candidate<=distance:
 				distance = candidate
 				target = enemy
-		if target.is_empty(): continue
-		# 동료 이동: 적에게 접근
-		var to_target: Vector2 = (target.pos-ally.pos)
-		if to_target.length() > 6.0:
-			ally.pos += to_target.normalized()*3*dt
-			ally.pos = clamp_position(ally.pos)
+		if not target.is_empty():
+			var to_target: Vector2 = (target.pos-ally.pos)
+			if to_target.length() > 1.2:
+				ally.pos += to_target.normalized()*6.5*dt
+				ally.pos = clamp_position(ally.pos)
+		ally.attack_left -= dt
+		if target.is_empty() or ally.attack_left>0: continue
 		var direction: Vector2 = (target.pos-ally.pos).normalized()
 		if direction==Vector2.ZERO: direction = Vector2.RIGHT
 		projectiles.append({"pos":ally.pos,"previous":ally.pos,"velocity":direction*22.0,"hostile":false,"radius":0.15,"life":0.8,"damage":float(ally.get("ad",30)),"damage_type":"physical","target_id":target.id,"basic":false,"hero":ally.hero,"source":"ally"})
-		ally.attack_left = 0.8
-	# 동료 이동: 영웅을 따라감
-		var to_hero: Vector2 = (pos-ally.pos)
-		if to_hero.length() > 8.0:
-			ally.pos += to_hero.normalized()*2*dt
-			ally.pos = clamp_position(ally.pos)
+		ally.attack_left = float(tempo.defenders.attack_interval_seconds)
 
 func main_enemy_count() -> int:
 	var count: int = 0
