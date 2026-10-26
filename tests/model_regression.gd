@@ -28,7 +28,7 @@ func sim(hero: String = "guardian"):
 func advance(m, seconds: float):
 	for i in int(ceil(seconds*30)): m.step(1.0/30.0,Vector2.ZERO)
 
-func dummy(m, at: Vector2 = Vector2(12,12)):
+func dummy(m, at: Vector2 = Model.START+Vector2(-3,0)):
 	var e = m.spawn_enemy("crawler",at,false)
 	e.hp = 10000.0
 	e.max_hp = 10000.0

@@ -68,7 +68,7 @@ func run() -> void:
   for p in [Vector2(2,2),Vector2(47,2),Vector2(2,22),Vector2(47,22),Vector2(24,2),Vector2(24,22),Vector2(2,12),Vector2(47,12),Vector2(24,12),Vector2(-100,-100),Vector2(100,100)]:
    ui.model.pos=p
    var marker: Dictionary=ui.player_marker_geometry()
-   check(marker.visible and ui.MAP.encloses(marker.bounds),"marker clamped "+hero+str(p))
+   check(marker.visible and Rect2(Vector2.ZERO,ui.SIZE).encloses(marker.bounds),"marker clamped "+hero+str(p))
    check(ui.model.pos==p,"marker leaves position unchanged "+hero+str(p))
   ui.model.respawn_left=1
   check(not ui.player_marker_geometry().visible,"marker hidden during respawn "+hero)

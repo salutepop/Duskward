@@ -23,8 +23,8 @@ func contrast(a,b):
 func _initialize():call_deferred("run")
 func run():
  ui=load("res://main.tscn").instantiate();root.add_child(ui);await process_frame;ui.set_process(false);ui.sound_enabled=false
- check(ui.MAP==Rect2(0,40,1280,640),"uniform world projection")
- check(is_equal_approx(ui.MAP.size.x/48,ui.MAP.size.y/24),"world circles preserve radius")
+ check(ui.WORLD==Vector2(96,48) and is_equal_approx(ui.PPM,ui.SIZE.x/48.0),"uniform world projection")
+ check(ui._world(ui.camera_pos)==ui.SIZE*0.5,"camera centers the visible world")
  check(ui.font.resource_path.ends_with("Pretendard-Medium.otf") and ui.heading_font.resource_path.ends_with("Pretendard-SemiBold.otf"),"bundled Korean family files")
  check(ui.font.get_font_weight()==500 and ui.heading_font.get_font_weight()==600,"actual medium/semibold weight metadata")
  check(not ui.font.allow_system_fallback and not ui.heading_font.allow_system_fallback,"no device font fallback")

@@ -2,8 +2,8 @@ class_name SiegeModel
 extends RefCounted
 ## Authoritative offline solo simulation. Presentation has no combat authority.
 ## Coordinates use meters; callers advance at 30 Hz. RNG is explicitly seeded.
-const CASTLE = Vector2(4, 12)
-const START = Vector2(9, 12)
+const CASTLE = Vector2(8, 24)
+const START = Vector2(16, 24)
 const SAVE_PATH = "user://emberwatch_checkpoint.json"
 const BUILD = "0.3.0"
 const SAVE_SCHEMA = 4
@@ -399,11 +399,11 @@ func _step_wave_reinforcements(dt: float) -> void:
 
 func _spawn_position() -> Vector2:
 	var roll: float = spawn_rng.randf()
-	if roll < 0.33:
-		return Vector2(44,spawn_rng.randf_range(4,20))
-	if roll < 0.66:
-		return Vector2(spawn_rng.randf_range(4,42),2)
-	return Vector2(spawn_rng.randf_range(4,42),22)
+	if roll < 0.4:
+		return Vector2(92,spawn_rng.randf_range(6,42))
+	if roll < 0.7:
+		return Vector2(spawn_rng.randf_range(14,86),4)
+	return Vector2(spawn_rng.randf_range(14,86),44)
 
 func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: RandomNumberGenerator = null) -> Dictionary:
 	var e: Dictionary
@@ -501,7 +501,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 		prep_left -= dt
 		if prep_left <= 0:
 			phase = "Boss"
-			spawn_enemy("boss",Vector2(36,12),false)
+			spawn_enemy("boss",Vector2(84,24),false)
 			announce("Break the cannon core. Dodge striped ground attacks.")
 		return
 	if phase == "Combat" and not spawn_queue.is_empty():
@@ -567,7 +567,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 		_clear_wave()
 
 func clamp_position(p: Vector2) -> Vector2:
-	return Vector2(clampf(p.x,2,46),clampf(p.y,2,22))
+	return Vector2(clampf(p.x,2,94),clampf(p.y,2,46))
 
 func _clear_wave():
 	if completed_wave >= wave: return

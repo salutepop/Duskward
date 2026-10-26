@@ -8,6 +8,10 @@ const SIZE = Vector2(1280, 720)
 const FIXED_STEP_SECONDS = 1.0 / 30.0
 const FRAME_DELTA_CAP_SECONDS = 0.15
 const MAP = Rect2(0, 40, 1280, 640)
+const WORLD = Vector2(96, 48)
+const PPM = 1280.0 / 48.0
+const VIEW_SCALE = 1280.0 / 96.0
+var camera_pos: Vector2 = Vector2(48, 24)
 const INK = Color("111615")
 const PANEL = Color("1b211e")
 const LINE = Color("53584b")
@@ -178,6 +182,7 @@ func _process(delta: float) -> void:
 	toast_time = maxf(0, toast_time - delta)
 	banner_time = maxf(0, banner_time - delta)
 	screen_shake = maxf(0, screen_shake - delta * 7)
+	_update_camera(delta)
 	base_flash = maxf(0,base_flash-delta)
 	for floater in floating_text: floater.life -= delta
 	floating_text = floating_text.filter(func(f): return f.life>0)
@@ -335,7 +340,9 @@ func _prepare_corner_fixture(stage: String) -> void:
 	model.recalculate_stats()
 	model.hp=model.stats.max_hp
 	model.energy=model.stats.max_energy
-	model.pos={"corner-lower":Vector2(44.2,22.0),"corner-upper":Vector2(44.2,18.3),"left-stick":Vector2(4.875,21.8),"top-hud":Vector2(24,2.5)}[stage]
+	var fixture_view: Array={"corner-lower":[Vector2(72,34.5),Vector2(92.2,44.5)],"corner-upper":[Vector2(72,34.5),Vector2(92.2,40.8)],"left-stick":[Vector2(24,34.5),Vector2(4.9,44.3)],"top-hud":[Vector2(48,13.5),Vector2(48,4.0)]}[stage]
+	camera_pos=fixture_view[0]
+	model.pos=fixture_view[1]
 	model.enemies.clear()
 	model.spawn_queue.clear()
 	var enemy: Dictionary=model.spawn_enemy("guard",model.pos+Vector2(-1.1,-0.1),false)
@@ -404,8 +411,7 @@ func _movement() -> Vector2:
 		keyboard += Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
 	var screen_direction: Vector2 = joystick if joystick.length() > 0.05 else keyboard.limit_length()
 	# Inverse project input so a diagonal stick points where the hero actually travels.
-	var inverse_projected: Vector2 = Vector2(screen_direction.x,screen_direction.y*(MAP.size.x/48.0)/(MAP.size.y/24.0))
-	return inverse_projected.normalized()*minf(1.0,screen_direction.length())
+	return screen_direction.normalized()*minf(1.0,screen_direction.length())
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -547,7 +553,7 @@ func _skill_target() -> Vector2:
 	var delta: Vector2 = Vector2(skill_pointer.position)-Vector2(skill_pointer.origin)
 	var reach: float = _aim_range(str(skill_pointer.slot))
 	if delta.length()<16 or reach==0: return Vector2.ZERO
-	var direction: Vector2 = Vector2(delta.x,delta.y*(MAP.size.x/48.0)/(MAP.size.y/24.0)).normalized()
+	var direction: Vector2 = delta.normalized()
 	var directional: bool = model.hero_id+"."+str(skill_pointer.slot) in ["guardian.Q","ranger.Q","ranger.E"]
 	var distance: float = reach if directional else reach*clampf(delta.length()/85.0,0,1)
 	return model.pos+direction*distance
@@ -712,6 +718,7 @@ func _save_settings() -> void:
 
 func _start_new() -> void:
 	model.reset(selected_hero)
+	_snap_camera()
 	_reset_clock("new_game")
 	selected_slot = -1
 	_select_shop_item("focus_stone" if selected_hero=="arcanist" else "iron_blade")
@@ -812,8 +819,21 @@ func _reason(reason: String) -> String:
 	if reason=="Ready": return _t("shop.buy")
 	return reason
 
+func _snap_camera() -> void:
+	var half: Vector2 = SIZE/(2.0*PPM)
+	camera_pos = model.pos if model != null else camera_pos
+	camera_pos.x = clampf(camera_pos.x,half.x,maxf(half.x,WORLD.x-half.x))
+	camera_pos.y = clampf(camera_pos.y,half.y,maxf(half.y,WORLD.y-half.y))
+
+func _update_camera(delta: float) -> void:
+	var half: Vector2 = SIZE/(2.0*PPM)
+	var target: Vector2 = model.pos if model != null else camera_pos
+	camera_pos = camera_pos.lerp(target,clampf(delta*9.0,0,1))
+	camera_pos.x = clampf(camera_pos.x,half.x,maxf(half.x,WORLD.x-half.x))
+	camera_pos.y = clampf(camera_pos.y,half.y,maxf(half.y,WORLD.y-half.y))
+
 func _world(p: Vector2) -> Vector2:
-	return MAP.position + Vector2(p.x / 48.0 * MAP.size.x, p.y / 24.0 * MAP.size.y)
+	return SIZE*0.5 + (p-camera_pos)*PPM
 
 func _draw() -> void:
 	ui_paint=Vector3.ONE
@@ -878,12 +898,12 @@ func _occlusion_regions() -> Array[Dictionary]:
 		if float(enemy.get("telegraph",0))>0:
 			result.append({"rect":Rect2(_world(enemy.pos)+Vector2(-10,-55),Vector2(20,20)),"source":"enemy_warning"})
 			var locked: Vector2 = _world(Vector2(enemy.get("attack_pos",model.pos)))
-			var radius: float = (0.8 if str(enemy.kind) in ["siege","shooter"] else 1.8)*MAP.size.x/96.0
+			var radius: float = (0.8 if str(enemy.kind) in ["siege","shooter"] else 1.8)*VIEW_SCALE
 			result.append({"rect":Rect2(locked-Vector2.ONE*radius,Vector2.ONE*radius*2).grow(3),"source":"enemy_warning"})
 			if str(enemy.kind) in ["siege","shooter"]:
 				result.append({"rect":Rect2(_world(enemy.pos),Vector2.ZERO).expand(locked).grow(4),"source":"enemy_warning"})
 	for hazard in model.hazards:
-		var radius: float = float(hazard.radius)*MAP.size.x/96.0
+		var radius: float = float(hazard.radius)*VIEW_SCALE
 		result.append({"rect":Rect2(_world(hazard.pos)-Vector2.ONE*radius,Vector2.ONE*radius*2).grow(3),"source":"hazard"})
 	if model.boss_pattern_left>0 and model.boss_pattern=="smash":
 		var origin: Vector2 = Vector2(model.boss_pattern_data.pos)
@@ -896,7 +916,7 @@ func _occlusion_regions() -> Array[Dictionary]:
 		var point: Vector2 = Vector2(shot.pos)
 		# Current/past trail plus100ms directional lookahead avoids a point blink.
 		var bounds: Rect2 = Rect2(_world(point),Vector2.ZERO).expand(_world(Vector2(shot.get("previous",point))))
-		bounds=bounds.expand(_world(point+Vector2(shot.get("velocity",Vector2.ZERO))*0.1)).grow(maxf(20,float(shot.get("radius",0.3))*MAP.size.x/96.0))
+		bounds=bounds.expand(_world(point+Vector2(shot.get("velocity",Vector2.ZERO))*0.1)).grow(maxf(20,float(shot.get("radius",0.3))*VIEW_SCALE))
 		result.append({"rect":bounds,"source":"hostile_projectile"})
 	return result
 
@@ -1037,7 +1057,7 @@ func _draw_title() -> void:
 
 func _draw_arena() -> void:
 	art.terrain(self, Rect2(Vector2.ZERO,SIZE), time)
-	art.castle(self, _world(Vector2(4,12)), model.base_hp / maxf(1,model.max_base_hp), time)
+	art.castle(self, _world(Model.CASTLE), model.base_hp / maxf(1,model.max_base_hp), time)
 	_draw_hunt_camp()
 	_draw_defenders()
 	# All combat geometry is projected from model meters, including y perspective.
@@ -1116,7 +1136,7 @@ func _draw_arena() -> void:
 		_label(floater.text,location,16,Color(GOLD,minf(1,float(floater.life)*3)),HORIZONTAL_ALIGNMENT_CENTER)
 	_draw_player_marker()
 	if model.hp / maxf(1,float(model.stats.get("max_hp",1)))<0.25 and model.respawn_left<=0:
-		draw_rect(MAP,Color(0.95,0.2,0.1,0.2+sin(time*5)*0.08),false,4)
+		draw_rect(Rect2(Vector2.ZERO,SIZE),Color(0.95,0.2,0.1,0.2+sin(time*5)*0.08),false,4)
 
 # Decorative screen-space tracking ring, not a combat range indicator. It is
 # drawn above units/effects while boss HUD text remains in the foreground.
@@ -1125,8 +1145,8 @@ func player_marker_geometry() -> Dictionary:
 	var margin: Vector2 = radii+Vector2(3,3)
 	# Sprite anchor is83% of its height: the ellipse contacts the boot bottoms.
 	var center: Vector2 = _world(model.pos)+Vector2(0,7)
-	center.x = clampf(center.x,MAP.position.x+margin.x,MAP.end.x-margin.x)
-	center.y = clampf(center.y,MAP.position.y+margin.y,MAP.end.y-margin.y)
+	center.x = clampf(center.x,margin.x,SIZE.x-margin.x)
+	center.y = clampf(center.y,margin.y,SIZE.y-margin.y)
 	return {"visible":mode=="game" and model.respawn_left<=0,"center":center,"radius":radii.x,"radii":radii,"shape":"ground_ellipse","bounds":Rect2(center-margin,margin*2)}
 
 func _draw_player_marker() -> void:
@@ -1337,26 +1357,22 @@ func _draw_defenders() -> void:
 func _draw_minimap() -> void:
 	if model == null or model.enemies == null:
 		return
-	var mm_rect = Rect2(20, 400, 160, 90)
+	var mm_rect = Rect2(20, 400, 160, 80)
 	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
-	# 맵 경계
-	draw_rect(Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10)), Color(0.15,0.2,0.15,0.3), false, 1)
-	# 적 표시
+	var inner: Rect2 = Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10))
+	draw_rect(inner, Color(0.15,0.2,0.15,0.3), false, 1)
+	var to_map = func(p: Vector2) -> Vector2:
+		return inner.position + Vector2(p.x/WORLD.x*inner.size.x, p.y/WORLD.y*inner.size.y)
+	var view_size: Vector2 = SIZE/PPM
+	var view_origin: Vector2 = camera_pos-view_size*0.5
+	draw_rect(Rect2(to_map.call(view_origin),Vector2(view_size.x/WORLD.x*inner.size.x,view_size.y/WORLD.y*inner.size.y)), Color(0.75,0.68,0.4,0.55), false, 1)
+	draw_circle(to_map.call(Model.CASTLE), 3.0, TEAL)
 	for e in model.enemies:
-		var mx: float = mm_rect.position.x + 5 + (e.pos.x / 48.0) * (mm_rect.size.x - 10)
-		var my: float = mm_rect.position.y + 5 + (e.pos.y / 24.0) * (mm_rect.size.y - 10)
-		var r: float = 2.0 if str(e.kind)=="elite" else 2.0
-		var col: Color = Color(0.8,0.2,0.2) if str(e.kind)=="elite" else RED
-		draw_circle(Vector2(mx,my), r, col)
-	# 동료 표시
+		var col: Color = Color(0.95,0.45,0.3) if str(e.kind) in ["elite","boss"] else RED
+		draw_circle(to_map.call(e.pos), 2.0, col)
 	for ally in model.allies:
-		var ax: float = mm_rect.position.x + 5 + (ally.pos.x / 48.0) * (mm_rect.size.x - 10)
-		var ay: float = mm_rect.position.y + 5 + (ally.pos.y / 24.0) * (mm_rect.size.y - 10)
-		draw_circle(Vector2(ax,ay), 2.5, TEAL)
-	# 영웅 표시
-	var hx: float = mm_rect.position.x + 5 + (model.pos.x / 48.0) * (mm_rect.size.x - 10)
-	var hy: float = mm_rect.position.y + 5 + (model.pos.y / 24.0) * (mm_rect.size.y - 10)
-	draw_circle(Vector2(hx,hy), 3.0, GOLD)
+		draw_circle(to_map.call(ally.pos), 2.5, TEAL)
+	draw_circle(to_map.call(model.pos), 3.0, GOLD)
 	# 베이스 표시
 	var bx: float = mm_rect.position.x + 5 + (4.0 / 48.0) * (mm_rect.size.x - 10)
 	var by: float = mm_rect.position.y + 5 + (12.0 / 24.0) * (mm_rect.size.y - 10)

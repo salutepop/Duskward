@@ -31,8 +31,8 @@ func run():
 	check(m.metrics.lane_gold==6 and m.metrics.lane_xp==15,"lane reward attribution")
 	check(m.metrics.hero_lane_gold==6 and m.metrics.defender_lane_gold==0,"hero lane attribution")
 	m._resolve_deaths();check(m.gold==gold+6,"death settlement idempotent")
-	m=Model.new();m.phase="Combat";m.auto_attack_enabled=false;m.pos=Vector2(30,12)
-	enemy=m.spawn_enemy("crawler",Vector2(8,10));enemy.speed=0;enemy.attack_timer=100
+	m=Model.new();m.phase="Combat";m.auto_attack_enabled=false;m.pos=Vector2(30,24)
+	enemy=m.spawn_enemy("crawler",Vector2(9,22));enemy.speed=0;enemy.attack_timer=100
 	for i in 30: m._step_defenders(1.0/30);m._step_projectiles(1.0/30)
 	check(m.metrics.defender_damage>0 and m.metrics.damage_dealt==0,"AI damage separately credited")
 	check(m.metrics.damage_by_source.is_empty() and m.ranger_hits==0 and m.arcanist_passive_cd==0,"AI no hero attack procs")
@@ -41,14 +41,14 @@ func run():
 	m._damage_defender(m.defenders[0],10000)
 	check(m.defenders[0].hp==0 and m.defenders[0].respawn_left==22 and m.metrics.defender_deaths==1,"AI death and respawn timer")
 	m._step_defenders(22.1);check(m.defenders[0].hp==260,"AI revives without hero resource changes")
-	m.enemies=[];enemy=m.spawn_enemy("siege",Vector2(12,12));enemy.attack_timer=0;m._step_enemies(1.0/30)
+	m.enemies=[];enemy=m.spawn_enemy("siege",Vector2(12,24));enemy.attack_timer=0;m._step_enemies(1.0/30)
 	check(enemy.attack_target=="base" and is_equal_approx(enemy.telegraph,0.9),"siege ignores defenders and keeps warning")
-	m.enemies=[];enemy=m.spawn_enemy("crawler",Vector2(7.5,10));enemy.attack_timer=0;m._step_enemies(1.0/30)
+	m.enemies=[];enemy=m.spawn_enemy("crawler",Vector2(7.5,22));enemy.attack_timer=0;m._step_enemies(1.0/30)
 	check(enemy.attack_target=="defender","ordinary enemy targets live defender")
 	var before=m.base_hp;m._damage_defender(m.defenders[0],10000);m._enemy_attack(enemy)
 	check(m.base_hp==before,"dead ally target does not redirect to castle")
 	m=Model.new();m.phase="Boss";m.auto_attack_enabled=false
-	enemy=m.spawn_enemy("weakness",Vector2(10,12),false)
+	enemy=m.spawn_enemy("weakness",Vector2(10,24),false)
 	for ally in m.defenders: ally.attack_left=0
 	for i in 120: m._step_defenders(1.0/30);m._step_projectiles(1.0/30)
 	check(enemy.hp>0,"defenders cannot clear fresh core alone in4seconds")

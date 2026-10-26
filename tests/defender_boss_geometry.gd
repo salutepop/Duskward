@@ -10,7 +10,7 @@ func smash(m,center:Vector2,direction:Vector2):
 	m._resolve_boss_pattern({})
 func _init():
 	var m=Model.new();m.phase="Boss";m.pos=m.defenders[0].pos
-	smash(m,Vector2(12,12),Vector2.LEFT)
+	smash(m,Vector2(12,22),Vector2.LEFT)
 	check(m.hp<900,"hero positive smash control")
 	check(is_equal_approx(m.defenders[0].hp,80) and is_equal_approx(m.defenders[1].hp,80),"both defenders take same raw cone damage")
 	m=Model.new();m.defenders[0].pos=Vector2(12,12);m.defenders[1].pos=Vector2(20,12)
