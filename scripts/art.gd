@@ -48,14 +48,14 @@ func sprite(c: CanvasItem, id: String, at: Vector2, height: float, flip: bool = 
 		c.draw_texture_rect_region(atlas,target,source,tint)
 	return true
 
-func backdrop(c: CanvasItem, t: float) -> void:
-	c.draw_rect(Rect2(0,0,1280,720),Color("111610"))
+func backdrop(c: CanvasItem, t: float, size: Vector2 = Vector2(1280,720)) -> void:
+	c.draw_rect(Rect2(Vector2.ZERO,size),Color("111610"))
 	if background!=null:
-		c.draw_texture_rect(background,Rect2(0,0,1280,720),false,Color(0.46,0.47,0.37))
+		c.draw_texture_rect(background,Rect2(Vector2.ZERO,size),false,Color(0.46,0.47,0.37))
 	# Quiet natural light on the character, iron-dark space behind menu lettering.
 	for i in range(16):
-		c.draw_rect(Rect2(640+i*40,0,40,720),Color(0.025,0.035,0.025,0.35+i*0.025))
-	c.draw_rect(Rect2(0,0,1280,720),Color(0.025,0.035,0.025,0.20))
+		c.draw_rect(Rect2(size.x*0.5+i*40,0,40,size.y),Color(0.025,0.035,0.025,0.35+i*0.025))
+	c.draw_rect(Rect2(Vector2.ZERO,size),Color(0.025,0.035,0.025,0.20))
 
 func terrain(c: CanvasItem, bounds: Rect2, t: float) -> void:
 	c.draw_rect(bounds,Color("263b39"))

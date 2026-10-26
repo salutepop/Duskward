@@ -4,7 +4,12 @@ extends Node2D
 const Model = preload("res://scripts/siege_model.gd")
 const Art = preload("res://scripts/art.gd")
 const QAController = preload("res://scripts/qa_autoplay.gd")
-const SIZE = Vector2(1280, 720)
+var SIZE: Vector2 = Vector2(1280, 720)
+# Room beyond the 1280x720 design box. The world fills it; each HUD group is
+# pushed to the physical edge it belongs to (16:10 tablet, 19.5:9 phone).
+var UI_DX: float = 0.0
+var UI_DY: float = 0.0
+var hit_offset: Vector2 = Vector2.ZERO
 const FIXED_STEP_SECONDS = 1.0 / 30.0
 const FRAME_DELTA_CAP_SECONDS = 0.15
 const MAP = Rect2(0, 40, 1280, 640)
@@ -114,7 +119,34 @@ var qa_controller: Node = null
 var audio: AudioStreamPlayer
 var sound_enabled: bool = true
 
+func _layout() -> void:
+	# The headless display server reports a square 1280x1280 window that has no
+	# physical counterpart; keep the design box so geometry audits stay exact.
+	SIZE = Vector2(1280,720) if DisplayServer.get_name()=="headless" else get_viewport_rect().size
+	UI_DX = maxf(0,SIZE.x-1280.0)
+	UI_DY = maxf(0,SIZE.y-720.0)
+	joystick_center = Vector2(130,621)+_anchor("bottom")
+	queue_redraw()
+
+# Offsets that keep a 1280x720 group glued to its edge instead of the origin.
+func _anchor(kind: String) -> Vector2:
+	match kind:
+		"right": return Vector2(UI_DX,0)
+		"bottom": return Vector2(0,UI_DY)
+		"bottom_right": return Vector2(UI_DX,UI_DY)
+		"center": return Vector2(UI_DX*0.5,0)
+		"bottom_center": return Vector2(UI_DX*0.5,UI_DY)
+	return Vector2.ZERO
+
+func _off(rect: Rect2, at: Vector2) -> Rect2:
+	return Rect2(rect.position+at, rect.size)
+
+func _modal_offset() -> Vector2:
+	return Vector2(UI_DX,UI_DY)*0.5
+
 func _ready() -> void:
+	_layout()
+	get_viewport().size_changed.connect(_layout)
 	_load_copy()
 	font = load("res://assets/fonts/Pretendard-Medium.otf") as Font
 	heading_font = load("res://assets/fonts/Pretendard-SemiBold.otf") as Font
@@ -533,8 +565,8 @@ func _skill_at(p: Vector2) -> String:
 func skill_center(slot_or_index: Variant) -> Vector2:
 	var index: int = int(slot_or_index) if slot_or_index is int else ["Q","W","E","R","F"].find(str(slot_or_index))
 	index = clampi(index,0,4)
-	if index==4: return Vector2(1178,418)
-	return Vector2(1056+(index%2)*122,528+(index/2)*110)
+	var base: Vector2 = Vector2(1178,418) if index==4 else Vector2(1056+(index%2)*122,528+(index/2)*110)
+	return base+_anchor("bottom_right")
 
 func _begin_skill_pointer(id: int, at: Vector2, slot: String) -> void:
 	if not skill_pointer.is_empty(): return
@@ -542,7 +574,7 @@ func _begin_skill_pointer(id: int, at: Vector2, slot: String) -> void:
 
 func _skill_cancel_rect() -> Rect2:
 	if skill_pointer.is_empty(): return Rect2()
-	return Rect2(878,506,96,62)
+	return _off(Rect2(878,506,96,62),_anchor("bottom_right"))
 
 func _aim_range(slot: String) -> float:
 	var key: String = model.hero_id+"."+slot
@@ -845,7 +877,12 @@ func _draw() -> void:
 		draw_set_transform(shake_offset,0,Vector2.ONE)
 	draw_rect(Rect2(Vector2.ZERO, SIZE), INK)
 	if mode == "title":
+		art.backdrop(self,time,SIZE)
+		hit_offset = _modal_offset()
+		draw_set_transform(hit_offset,0,Vector2.ONE)
 		_draw_title()
+		draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+		hit_offset = Vector2.ZERO
 	else:
 		_draw_arena()
 		_draw_hud()
@@ -854,35 +891,41 @@ func _draw() -> void:
 		_draw_minimap()
 		if banner_time > 0 and modal == "" and not (model.phase in ["Combat", "Boss", "BossIntro", "FinalPreparation"] and str(_status_content().title) != ""):
 			var alpha: float = minf(1, banner_time)
-			_set_ui_paint(Rect2(425,138,430,46))
-			_panel(Rect2(425, 138, 430, 46), Color(0.04,0.10,0.14,alpha * 0.90), Color(0.7,0.6,0.35,alpha))
-			_label(banner, Vector2(640, 169), 22, Color(0.96,0.85,0.6,alpha), HORIZONTAL_ALIGNMENT_CENTER)
+			var bx: float = SIZE.x*0.5-215
+			_set_ui_paint(Rect2(bx,138,430,46))
+			_panel(Rect2(bx, 138, 430, 46), Color(0.04,0.10,0.14,alpha * 0.90), Color(0.7,0.6,0.35,alpha))
+			_label(banner, Vector2(SIZE.x*0.5, 169), 22, Color(0.96,0.85,0.6,alpha), HORIZONTAL_ALIGNMENT_CENTER)
 			ui_paint=Vector3.ONE
 	draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
 	if modal != "":
 		draw_rect(Rect2(Vector2.ZERO, SIZE), Color(0.02,0.025,0.02,0.66))
 		hits.clear()
+		hit_offset = _modal_offset()
+		draw_set_transform(hit_offset,0,Vector2.ONE)
 		match modal:
 			"shop": _draw_shop()
 			"pause": _draw_pause()
 			"help": _draw_help()
 			"credits": _draw_credits()
 			"result": _draw_result()
+		draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+		hit_offset = Vector2.ZERO
 	if toast_time>0 and not (mode=="game" and modal=="" and bool(_status_content().danger)):
 		var tw: float = minf(1150,maxf(300,font.get_string_size(toast,HORIZONTAL_ALIGNMENT_LEFT,-1,19).x+48))
 		var ty: float = 676 if modal!="" else (486 if mode=="title" else 238)
-		_panel(Rect2((1280-tw)/2,ty,tw,36),Color("272e23"),GOLD,4)
-		_label(toast,Vector2(640,ty+25),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+		_panel(Rect2((SIZE.x-tw)/2,ty,tw,36),Color("272e23"),GOLD,4)
+		_label(toast,Vector2(SIZE.x*0.5,ty+25),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+	var low: Vector2 = _anchor("bottom_center")
 	if is_instance_valid(qa_controller):
-		_panel(Rect2(460,682,360,30),Color("30291d"),GOLD,6)
-		_label("QA AUTOPLAY · 합성 입력 테스트" if qa_controller.active else "QA AUTOPLAY · 테스트 종료",Vector2(640,703),14,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
+		_panel(_off(Rect2(460,682,360,30),low),Color("30291d"),GOLD,6)
+		_label("QA AUTOPLAY · 합성 입력 테스트" if qa_controller.active else "QA AUTOPLAY · 테스트 종료",Vector2(640,703)+low,14,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
 
 	if diagnostic_fixture:
-		_panel(Rect2(315,680,650,32),Color("392719"),GOLD,3)
-		_label("FIXTURE · 상태 주입 · 플레이 검증 아님",Vector2(640,703),18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+		_panel(_off(Rect2(315,680,650,32),low),Color("392719"),GOLD,3)
+		_label("FIXTURE · 상태 주입 · 플레이 검증 아님",Vector2(640,703)+low,18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 
 func control_painted_rects() -> Dictionary:
-	var result: Dictionary = {"stick":Rect2(joystick_center-Vector2(68,68),Vector2(136,136)),"potion":Rect2(877,595,86,104),"hud_hero":Rect2(24,22,340,140),"hud_castle":Rect2(424,22,432,100),"hud_boss":Rect2(424,130,432,54),"hud_gold":Rect2(890,22,158,42),"hud_shop":Rect2(1070,22,80,80),"hud_pause":Rect2(1166,22,90,80)}
+	var result: Dictionary = {"stick":Rect2(joystick_center-Vector2(68,68),Vector2(136,136)),"potion":_off(Rect2(877,595,86,104),_anchor("bottom_right")),"hud_hero":Rect2(24,22,340,140),"hud_castle":_off(Rect2(424,22,432,100),_anchor("center")),"hud_boss":_off(Rect2(424,130,432,54),_anchor("center")),"hud_gold":_off(Rect2(890,22,158,42),_anchor("right")),"hud_shop":_off(Rect2(1070,22,80,80),_anchor("right")),"hud_pause":_off(Rect2(1166,22,90,80),_anchor("right"))}
 	for slot in ["Q","W","E","R","F"]: result[slot]=Rect2(skill_center(slot)-Vector2(50,50),Vector2(100,112))
 	return result
 
@@ -935,6 +978,11 @@ func occlusion_paint_state() -> Dictionary:
 		var faded: bool = not sources.is_empty()
 		result[id]={"rect":rectangles[id],"occluded":faded,"sources":sources,"backing_alpha":OCCLUSION_BACKING_ALPHA if faded else 1.0,"ink_alpha":OCCLUSION_INK_ALPHA if faded else 1.0,"text_alpha":OCCLUSION_TEXT_ALPHA if faded else 1.0}
 	return result
+
+# Modal layers are drawn under a centering transform, so their local rects are
+# translated once here; in-game controls record already-final screen rects.
+func _record_hit(rect: Rect2, action: String, value: String = "") -> void:
+	hits.append({"rect":_off(rect,hit_offset),"action":action,"value":value})
 
 func _set_ui_paint(rect: Rect2) -> void:
 	ui_paint=Vector3(OCCLUSION_BACKING_ALPHA,OCCLUSION_INK_ALPHA,OCCLUSION_TEXT_ALPHA) if not _overlap_sources(rect,paint_regions).is_empty() else Vector3.ONE
@@ -996,13 +1044,13 @@ func _button(rect: Rect2, text: String, action: String, value: String = "", prim
 	var previous_paint: Vector3 = ui_paint
 	_set_ui_paint(rect)
 	var bg: Color = Color("494436") if primary else Color("282e29")
-	if rect.has_point(hover_pos): bg = bg.lightened(0.08)
+	if rect.has_point(hover_pos-hit_offset): bg = bg.lightened(0.08)
 	if not enabled: bg = Color("232824")
 	_panel(rect,bg,GOLD if primary and enabled else LINE,4)
 	if primary and enabled:
 		draw_line(rect.position+Vector2(12,rect.size.y-5),rect.end-Vector2(12,5),_ui_ink(GOLD),2,true)
 	_label(text,rect.get_center()+Vector2(0,size*0.36),size,PAPER if enabled else MUTED,HORIZONTAL_ALIGNMENT_CENTER)
-	hits.append({"rect":rect,"action":action,"value":value})
+	_record_hit(rect,action,value)
 	ui_paint=previous_paint
 
 func _bar(rect: Rect2, value: float, maximum: float, color: Color, title: String = "", text_size: int = 14) -> void:
@@ -1019,13 +1067,13 @@ func _hero_color(id: String) -> Color:
 	return {"guardian":Color("6acccc"),"ranger":Color("a5ce7e"),"arcanist":Color("c3a2eb")}.get(id, TEAL)
 
 func _draw_title() -> void:
-	art.backdrop(self,time)
 	# A single hero dominates the scene; the roster is a compact new-game choice.
 	art.castle(self,Vector2(152,402),1.0,time)
-	draw_set_transform(Vector2(358,565),0,Vector2(1,0.25))
+	draw_set_transform(Vector2(358,565)+_modal_offset(),0,Vector2(1,0.25))
 	draw_circle(Vector2.ZERO,205,Color(0.025,0.03,0.025,0.5))
 	draw_arc(Vector2.ZERO,202,0,TAU,64,Color("75654a"),3,true)
-	draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	# Restore the layer transform, not the identity: the title is drawn centered.
+	draw_set_transform(_modal_offset(),0,Vector2.ONE)
 	art.hero(self,Vector2(358,552),selected_hero,Vector2.RIGHT,time,6.0,false)
 	_label(_t("app.name"),Vector2(702,144),52,PAPER)
 	draw_line(Vector2(702,169),Vector2(1130,169),GOLD,2,true)
@@ -1041,7 +1089,7 @@ func _draw_title() -> void:
 		if chosen:
 			draw_colored_polygon(PackedVector2Array([rect.position+Vector2(8,8),rect.position+Vector2(24,8),rect.position+Vector2(8,24)]),GOLD)
 			draw_line(rect.position+Vector2(16,122),rect.end-Vector2(16,4),GOLD,2,true)
-		hits.append({"rect":rect,"action":"hero","value":id})
+		_record_hit(rect,"hero",id)
 	_label(HERO_NAMES[selected_hero],Vector2(702,460),38,PAPER)
 	_label(HERO_ROLES[selected_hero],Vector2(1130,458),22,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
 	_paragraph(HERO_BLURBS[selected_hero],Rect2(702,486,430,52),22,MUTED,30)
@@ -1168,7 +1216,7 @@ func _draw_aim_preview() -> void:
 	match key:
 		"guardian.Q": _draw_world_cone(model.pos,direction,4.0,PI/4,fill,border)
 		"guardian.E":
-			target = Vector2(clampf(target.x,2,47),clampf(target.y,2,22))
+			target = model.clamp_position(target)
 			draw_line(_world(model.pos),_world(target),border,3,true)
 			_draw_world_disk(target,2.5,fill,border)
 		"ranger.Q":
@@ -1178,11 +1226,11 @@ func _draw_aim_preview() -> void:
 			draw_colored_polygon(corners.slice(0,corners.size()-1),fill)
 			draw_polyline(corners,border,2,true)
 		"ranger.W":
-			target = Vector2(clampf(target.x,2,47),clampf(target.y,2,22))
+			target = model.clamp_position(target)
 			_draw_world_disk(target,3,fill,border)
 		"ranger.E":
 			target = model.pos-direction*4
-			target = Vector2(clampf(target.x,2,47),clampf(target.y,2,22))
+			target = model.clamp_position(target)
 			draw_line(_world(model.pos),_world(target),border,3,true)
 			_draw_world_disk(target,0.65,fill,border)
 			_label("후퇴",_world(target)+Vector2(0,-20),13,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
@@ -1289,7 +1337,7 @@ func hunt_summary() -> Dictionary:
 	elif state=="returning": detail=_t("hunt.return_progress",{"seconds":"%.1f" % maxf(0,float(model.hunt.get("return_left",0)))})
 	var return_hint_key: String = "hunt.emergency_hint" if emergency else "hunt.return_hint"
 	if state=="active": return_hint_key="hunt.abandon_emergency_hint" if emergency else "hunt.abandon_hint"
-	return {"return_hint":_t(return_hint_key,values),"state":state,"visible":visible,"pos":Vector2(model.hunt.get("pos",Vector2.ZERO)),"radius":float(rules.activation_radius),"title":title,"detail":detail,"emergency":emergency,"entry_blocked":blocked,"can_start":_can_hunt_start(),"can_return":_can_hunt_return(),"return_rect":Rect2(350,600,280,78)}
+	return {"return_hint":_t(return_hint_key,values),"state":state,"visible":visible,"pos":Vector2(model.hunt.get("pos",Vector2.ZERO)),"radius":float(rules.activation_radius),"title":title,"detail":detail,"emergency":emergency,"entry_blocked":blocked,"can_start":_can_hunt_start(),"can_return":_can_hunt_return(),"return_rect":_off(Rect2(350,600,280,78),_anchor("bottom_center"))}
 
 func _sync_hunt_presentation() -> void:
 	var state: String = str(model.hunt.get("state",""))
@@ -1326,10 +1374,10 @@ func _draw_hunt_return() -> void:
 	var summary: Dictionary = hunt_summary()
 	if summary.can_start:
 		_button(summary.return_rect,_t("hunt.start"),"hunt_start","",true,true,24)
-		_label(_t("hunt.start_risk"),Vector2(490,588),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+		_label(_t("hunt.start_risk"),Vector2(490,588)+_anchor("bottom_center"),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	elif summary.can_return:
 		_button(summary.return_rect,_t("hunt.emergency_return" if summary.emergency else "hunt.return"),"hunt_return","",true,true,24)
-		_label(str(summary.return_hint),Vector2(490,588),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+		_label(str(summary.return_hint),Vector2(490,588)+_anchor("bottom_center"),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	elif summary.visible and summary.state=="returning":
 		_set_ui_paint(summary.return_rect)
 		_panel(summary.return_rect,Color(0.07,0.09,0.07,0.92),GOLD,4)
@@ -1373,10 +1421,6 @@ func _draw_minimap() -> void:
 	for ally in model.allies:
 		draw_circle(to_map.call(ally.pos), 2.5, TEAL)
 	draw_circle(to_map.call(model.pos), 3.0, GOLD)
-	# 베이스 표시
-	var bx: float = mm_rect.position.x + 5 + (4.0 / 48.0) * (mm_rect.size.x - 10)
-	var by: float = mm_rect.position.y + 5 + (12.0 / 24.0) * (mm_rect.size.y - 10)
-	draw_circle(Vector2(bx,by), 3.0, Color(0.9,0.7,0.3))
 func _notice_text(notice: String) -> String:
 	var key: String = copy.notice_key(notice)
 	if key!="": return _t(key,{"seconds":_cooldown_text(model.boss_pattern_left)})
@@ -1413,29 +1457,31 @@ func _draw_hud() -> void:
 	_bar(Rect2(108,92,236,24),model.energy,float(model.stats.max_energy),MANA_FILL,_t("hud.mana_value",{"current":int(model.energy),"max":int(model.stats.max_energy)}),18)
 	if model.shield>0:
 		_label(_t("hud.shield",{"shield":int(model.shield)}),Vector2(34,154),18,BLUE)
+	var mid: Vector2 = _anchor("center")
+	var right: Vector2 = _anchor("right")
 	_set_ui_paint(paint_controls.hud_castle)
-	_panel(Rect2(424,22,432,100),Color(0.065,0.08,0.065,0.90),LINE,5)
-	_label(_t("hud.initial_wave") if model.wave==0 and _is_preparation() else (_t("hud.boss") if model.phase in ["Boss","BossIntro","FinalPreparation"] else _t("hud.wave",{"wave":model.wave})),Vector2(640,49),23,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
-	_bar(Rect2(442,63,396,27),model.base_hp,model.max_base_hp,DANGER_FILL if base_flash>0 else CASTLE_FILL,"%s  %d / %d" % [_t("hud.castle_hp"),maxi(0,int(model.base_hp)),model.max_base_hp],19)
+	_panel(_off(Rect2(424,22,432,100),mid),Color(0.065,0.08,0.065,0.90),LINE,5)
+	_label(_t("hud.initial_wave") if model.wave==0 and _is_preparation() else (_t("hud.boss") if model.phase in ["Boss","BossIntro","FinalPreparation"] else _t("hud.wave",{"wave":model.wave})),Vector2(640,49)+mid,23,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
+	_bar(_off(Rect2(442,63,396,27),mid),model.base_hp,model.max_base_hp,DANGER_FILL if base_flash>0 else CASTLE_FILL,"%s  %d / %d" % [_t("hud.castle_hp"),maxi(0,int(model.base_hp)),model.max_base_hp],19)
 	if model.phase=="Combat":
-		_label(_t("hud.enemy_count",{"count":lane_remaining_count()}),Vector2(640,113),18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+		_label(_t("hud.enemy_count",{"count":lane_remaining_count()}),Vector2(640,113)+mid,18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	else:
-		_label(_phase_label(),Vector2(640,113),18,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
+		_label(_phase_label(),Vector2(640,113)+mid,18,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
 	_set_ui_paint(paint_controls.hud_gold)
-	_label(_t("hud.gold",{"gold":model.gold}),Vector2(1048,55),26,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
+	_label(_t("hud.gold",{"gold":model.gold}),Vector2(1048,55)+right,26,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
 	ui_paint=Vector3.ONE
-	_button(Rect2(1070,22,80,80),_t("common.shop"),"modal","shop",false,true,21)
-	_button(Rect2(1166,22,90,80),"","modal","pause")
+	_button(_off(Rect2(1070,22,80,80),right),_t("common.shop"),"modal","shop",false,true,21)
+	_button(_off(Rect2(1166,22,90,80),right),"","modal","pause")
 	_set_ui_paint(paint_controls.hud_pause)
-	draw_rect(Rect2(1198,47,6,30),_ui_ink(PAPER))
-	draw_rect(Rect2(1217,47,6,30),_ui_ink(PAPER))
+	draw_rect(_off(Rect2(1198,47,6,30),right),_ui_ink(PAPER))
+	draw_rect(_off(Rect2(1217,47,6,30),right),_ui_ink(PAPER))
 	ui_paint=Vector3.ONE
 	for enemy in model.enemies:
 		if str(enemy.kind)=="boss":
 			_set_ui_paint(paint_controls.hud_boss)
-			_panel(Rect2(424,130,432,54),Color(0.09,0.06,0.05,0.93),Color("765047"),4)
-			_label(_t("enemy.boss.name"),Vector2(640,151),18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
-			_bar(Rect2(442,158,396,18),float(enemy.hp),float(enemy.max_hp),DANGER_FILL,"%d / %d" % [enemy.hp,enemy.max_hp],15)
+			_panel(_off(Rect2(424,130,432,54),mid),Color(0.09,0.06,0.05,0.93),Color("765047"),4)
+			_label(_t("enemy.boss.name"),Vector2(640,151)+mid,18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+			_bar(_off(Rect2(442,158,396,18),mid),float(enemy.hp),float(enemy.max_hp),DANGER_FILL,"%d / %d" % [enemy.hp,enemy.max_hp],15)
 
 	ui_paint=Vector3.ONE
 
@@ -1473,9 +1519,10 @@ func _draw_status_strip() -> void:
 	var danger: bool = bool(status.danger)
 	var width: float = minf(900,maxf(420,font.get_string_size(str(status.title),HORIZONTAL_ALIGNMENT_LEFT,-1,22).x+48))
 	var y: float = 188 if model.phase in ["Boss","BossIntro"] else (526 if _is_preparation() else 140)
-	_set_ui_paint(Rect2(640-width/2,y,width,46))
-	_panel(Rect2(640-width/2,y,width,46),Color(0.24,0.10,0.07,0.94) if danger else Color(0.08,0.10,0.08,0.88),RED if danger else LINE,4)
-	_label(str(status.title),Vector2(640,y+31),22,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+	var cx: float = SIZE.x*0.5
+	_set_ui_paint(Rect2(cx-width/2,y,width,46))
+	_panel(Rect2(cx-width/2,y,width,46),Color(0.24,0.10,0.07,0.94) if danger else Color(0.08,0.10,0.08,0.88),RED if danger else LINE,4)
+	_label(str(status.title),Vector2(cx,y+31),22,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	ui_paint=Vector3.ONE
 
 func _draw_controls() -> void:
@@ -1494,10 +1541,11 @@ func _draw_controls() -> void:
 	ui_paint=Vector3.ONE
 	if _is_preparation():
 		var key: String = "prep.boss_start" if model.phase=="FinalPreparation" else ("prep.first_start" if model.wave==0 else "prep.next_start")
-		_button(Rect2(350,598,280,80),_t(key),"next","",true,true,25)
-		_button(Rect2(646,598,170,80),_t("common.shop"),"modal","shop",false,true,23)
+		var low: Vector2 = _anchor("bottom_center")
+		_button(_off(Rect2(350,598,280,80),low),_t(key),"next","",true,true,25)
+		_button(_off(Rect2(646,598,170,80),low),_t("common.shop"),"modal","shop",false,true,23)
 		if model.prep_left>0:
-			_label(_t("prep.boss_countdown" if model.phase=="FinalPreparation" else "prep.countdown",{"seconds":int(ceilf(model.prep_left))}),Vector2(584,584),20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+			_label(_t("prep.boss_countdown" if model.phase=="FinalPreparation" else "prep.countdown",{"seconds":int(ceilf(model.prep_left))}),Vector2(584,584)+low,20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	_draw_hunt_return()
 	for i in range(5):
 		var slot: String = ["Q","W","E","R","F"][i]
@@ -1526,7 +1574,7 @@ func _draw_controls() -> void:
 		if float(skill_flash.get(slot,0))>0: draw_arc(center,49,0,TAU,48,_ui_ink(PAPER),3,true)
 		_panel(Rect2(center+Vector2(-49,37),Vector2(98,24)),Color("121912"),LINE,2)
 		_label(SKILL_NAMES[model.hero_id][i],center+Vector2(0,56),20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
-		hits.append({"rect":Rect2(center-Vector2(49,49),Vector2(98,110)),"action":"skill","value":slot})
+		_record_hit(Rect2(center-Vector2(49,49),Vector2(98,110)),"skill",slot)
 	ui_paint=Vector3.ONE
 	if not skill_pointer.is_empty():
 		var cancel: Rect2 = _skill_cancel_rect()
@@ -1534,7 +1582,7 @@ func _draw_controls() -> void:
 		_panel(cancel,Color("673d32") if cancel.has_point(skill_pointer.position) else Color("252b25"),RED,4)
 		_label(_t("common.cancel"),cancel.get_center()+Vector2(0,8),22,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 		draw_arc(skill_pointer.center,49,0,TAU,48,_ui_ink(PAPER),3,true)
-	var potion: Vector2 = Vector2(920,638)
+	var potion: Vector2 = Vector2(920,638)+_anchor("bottom_right")
 	_set_ui_paint(paint_controls.potion)
 	draw_circle(potion,40,_ui_fill(Color(0.035,0.04,0.03,0.92)))
 	draw_arc(potion,40,0,TAU,40,_ui_ink(GOLD if model.potions>0 else LINE),2,true)
@@ -1543,7 +1591,7 @@ func _draw_controls() -> void:
 	_label(_cooldown_text(model.potion_cd) if model.potion_cd>0 else "×%d" % model.potions,potion+Vector2(0,32),19,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	_panel(Rect2(potion+Vector2(-43,37),Vector2(86,24)),Color("121912"),LINE,2)
 	_label(_t("hud.potion"),potion+Vector2(0,56),20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
-	hits.append({"rect":Rect2(potion-Vector2(43,43),Vector2(86,104)),"action":"potion"})
+	_record_hit(Rect2(potion-Vector2(43,43),Vector2(86,104)),"potion")
 
 	ui_paint=Vector3.ONE
 
@@ -1634,7 +1682,7 @@ func _draw_shop() -> void:
 		art.item_icon(self,rect.position+Vector2(34,38),id,PAPER,1.0)
 		_label(_item_name(id),rect.position+Vector2(70,31),21,PAPER if unlocked else MUTED)
 		_label(_t("shop.price",{"price":int(item.total_price)}) if unlocked else _t("shop.unlock",{"wave":int(item.unlock_after_wave)}),rect.position+Vector2(70,61),18,GOLD if unlocked else MUTED)
-		hits.append({"rect":rect,"action":"item","value":id})
+		_record_hit(rect,"item",id)
 	_button(Rect2(58,510,154,48),_t("shop.previous"),"shop_page","0",false,shop_page>0,20)
 	_label(_t("shop.page",{"page":shop_page+1,"pages":2}),Vector2(430,542),20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	_button(Rect2(660,510,142,48),_t("shop.next"),"shop_page","1",false,shop_page<1,20)
@@ -1647,7 +1695,7 @@ func _draw_shop() -> void:
 			var id: String = str(model.inventory[i])
 			art.item_icon(self,rect.position+Vector2(57,27),id,PAPER,0.83)
 			_label(_item_name(id),rect.position+Vector2(57,64),18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
-			hits.append({"rect":rect,"action":"slot","value":str(i)})
+			_record_hit(rect,"slot",str(i))
 		else:
 			draw_line(rect.get_center()-Vector2(8,0),rect.get_center()+Vector2(8,0),LINE,2,true)
 			draw_line(rect.get_center()-Vector2(0,8),rect.get_center()+Vector2(0,8),LINE,2,true)
