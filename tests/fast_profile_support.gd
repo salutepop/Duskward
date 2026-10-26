@@ -96,7 +96,7 @@ func run():
 	for e in m.enemies:e.hp=0
 	m.step(1.0/30)
 	check(m.phase=="Preparation" and m.metrics.hunt_successes==1,"living last camp and lane kill pays before wave clear")
-	check(m.prep_left==8 and m.hunt.state=="closed","new prep duration and camp closure")
+	check(is_equal_approx(m.prep_left,float(m.tempo.preparation_seconds)) and m.hunt.state=="closed","configured prep duration and camp closure")
 	m=camp();m.pos=m.hunt.pos;m.start_hunt();m.pos=m.START
 	for e in m.enemies:e.attack_timer=0
 	for i in 300:m._step_enemies(1.0/30)

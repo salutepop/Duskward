@@ -2,8 +2,8 @@ class_name SiegeModel
 extends RefCounted
 ## Authoritative offline solo simulation. Presentation has no combat authority.
 ## Coordinates use meters; callers advance at 30 Hz. RNG is explicitly seeded.
-const CASTLE = Vector2(8, 24)
-const START = Vector2(16, 24)
+const CASTLE = Vector2(4, 12)
+const START = Vector2(9, 12)
 const SAVE_PATH = "user://emberwatch_checkpoint.json"
 const BUILD = "0.3.0"
 const SAVE_SCHEMA = 4
@@ -203,10 +203,6 @@ func recalculate_stats():
 		if group != "none":
 			set_counts[group] = int(set_counts.get(group, 0)) + 1
 	# 2-piece and 4-piece set bonuses
-	if set_counts.get("lifesteal_highest", 0) >= 2:
-		_active_set_effects["lifesteal_highest"] = true
-		if not stats.has("lifesteal"): stats.lifesteal = 0
-		stats.lifesteal = float(stats.lifesteal) + 0.15
 	if set_counts.get("berserker_rage", 0) >= 2:
 		_active_set_effects["berserker_rage"] = true
 		if not stats.has("ad"): stats.ad = 0
@@ -333,7 +329,6 @@ func start_next_wave() -> bool:
 		for i in range(spawn_queue.size()):
 			if spawn_queue[i]=="crawler" and rng.randf() < 0.1:
 				spawn_queue[i] = "elite"
-	# register elite in enemy_types for rendering
 	announce("WAVE %d  •  %d invaders incoming" % [wave,spawn_queue.size()+enemies.size()])
 	# Apply wave modifiers
 	if wave_modifier == "elite_rush":
@@ -1055,30 +1050,7 @@ func _step_enemies(dt: float):
 				e.summon_timer = 5.0
 				spawn_enemy("crawler", clamp_position(e.pos + Vector2(1,0)), false)
 				_effect("summon", e.pos, 2.0, 0.6)
-		if e.kind == "healer":
-			e.heal_timer = maxf(0, float(e.get("heal_timer",0.0)) - dt)
-			if e.heal_timer <= 0:
-				e.heal_timer = 3.0
-				for other in enemies:
-					if other.id != e.id and other.hp > 0 and other.pos.distance_to(e.pos) <= 6:
-						other.hp = minf(other.max_hp, other.hp + 15)
-						_effect("heal", other.pos, 1.0, 0.4)
-				_effect("heal", e.pos, 2.0, 0.5)
-		if e.kind == "shooter":
-			if target_name == "hero" and distance < 4 and not e.retreated:
-				e.pos = clamp_position(e.pos + (e.pos - pos).normalized() * 1.5)
-				e.retreated = true
-				distance = e.pos.distance_to(target)
-			elif distance > 7 and e.retreated:
-				e.retreated = false
-		if e.kind == "skirmisher" and e.attack_timer <= 0 and target_name == "hero" and distance < 3:
-			e.retreated = true
-			e.retreat_left = 0.6
-		if e.get("retreated", false) and e.retreat_left > 0:
-			e.pos = clamp_position(e.pos + (e.pos - target).normalized() * float(e.speed) * 1.2 * dt)
-			e.retreat_left -= dt
-			if e.retreat_left <= 0:
-				e.retreated = false
+		if e.telegraph>0:
 			e.telegraph -= dt
 			if e.telegraph<=0: _enemy_attack(e)
 			continue
@@ -1110,6 +1082,10 @@ func _step_enemies(dt: float):
 				target_name = "defender"
 				e.defender_target_id = ally.id
 		var distance = e.pos.distance_to(target)
+		if e.kind=="shooter" and target_name=="hero" and distance<3 and not e.retreated:
+			e.pos = clamp_position(e.pos+(e.pos-pos).normalized()*2)
+			e.retreated = true
+			distance = e.pos.distance_to(target)
 		if distance <= reach:
 			if e.attack_timer<=0:
 				e.telegraph = 0.9 if e.kind=="siege" else (0.45 if e.kind=="shooter" else 0.32)

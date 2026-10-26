@@ -213,6 +213,18 @@ func skill_icon(c: CanvasItem, at: Vector2, index: int, color: Color, hero_id: S
 			c.draw_line(at+Vector2(-14,0),at+Vector2(14,0),color,6,true)
 			c.draw_arc(at,25,-1.2,1.2,20,color,2.5,true)
 			c.draw_arc(at,25,PI-1.2,PI+1.2,20,color,2.5,true)
+		"guardian.4":
+			c.draw_polyline(PackedVector2Array([at+Vector2(-14,-20),at+Vector2(14,-20),at+Vector2(12,4),at+Vector2(0,18),at+Vector2(-12,4),at+Vector2(-14,-20)]),color,3,true)
+			for i in range(8):
+				var d: Vector2 = Vector2.from_angle(i*TAU/8)
+				c.draw_line(at+d*17,at+d*26,color,2,true)
+		"ranger.4":
+			for angle in [-15,0,15]:
+				var d: Vector2 = Vector2.RIGHT.rotated(deg_to_rad(angle))
+				_arrow(c,at-d*22,at+d*22,color,3)
+		"arcanist.4":
+			c.draw_colored_polygon(PackedVector2Array([at+Vector2(0,-24),at+Vector2(9,-6),at+Vector2(14,6),at+Vector2(6,20),at+Vector2(-6,20),at+Vector2(-14,6),at+Vector2(-9,-6)]),color)
+			c.draw_arc(at+Vector2(0,6),14,-0.4,PI+0.4,16,color,2,true)
 
 func potion_icon(c: CanvasItem, at: Vector2, color: Color, backing_opacity: float = 1.0) -> void:
 	var pts: PackedVector2Array = PackedVector2Array([at+Vector2(-6,-19),at+Vector2(6,-19),at+Vector2(6,-10),at+Vector2(13,0),at+Vector2(12,18),at+Vector2(-12,18),at+Vector2(-13,0),at+Vector2(-6,-10),at+Vector2(-6,-19)])

@@ -7,7 +7,7 @@ const QAController = preload("res://scripts/qa_autoplay.gd")
 const SIZE = Vector2(1280, 720)
 const FIXED_STEP_SECONDS = 1.0 / 30.0
 const FRAME_DELTA_CAP_SECONDS = 0.15
-const MAP = Rect2(0, 40, 1920, 480)
+const MAP = Rect2(0, 40, 1280, 640)
 const INK = Color("111615")
 const PANEL = Color("1b211e")
 const LINE = Color("53584b")
@@ -527,8 +527,8 @@ func _skill_at(p: Vector2) -> String:
 func skill_center(slot_or_index: Variant) -> Vector2:
 	var index: int = int(slot_or_index) if slot_or_index is int else ["Q","W","E","R","F"].find(str(slot_or_index))
 	index = clampi(index,0,4)
-	# Mobile-friendly bottom row layout for Galaxy S23 and similar devices
-	return Vector2(220+index*150, 1760)
+	if index==4: return Vector2(1178,418)
+	return Vector2(1056+(index%2)*122,528+(index/2)*110)
 
 func _begin_skill_pointer(id: int, at: Vector2, slot: String) -> void:
 	if not skill_pointer.is_empty(): return
@@ -1253,7 +1253,7 @@ func _can_hunt_return() -> bool:
 
 func hunt_summary() -> Dictionary:
 	if model == null or model.hunt == null:
-		return {"visible":false,"state":"","title":"","detail":"","pos":Vector2.ZERO,"radius":0.0,"emergency":False,"entry_blocked":False,"can_start":False,"can_return":False,"return_rect":Rect2()}
+		return {"visible":false,"state":"","title":"","detail":"","pos":Vector2.ZERO,"radius":0.0,"emergency":false,"entry_blocked":false,"can_start":false,"can_return":false,"return_rect":Rect2()}
 	var state: String = str(model.hunt.get("state",""))
 	var rules: Dictionary = model.tempo.hunt if model.tempo != null and model.tempo.has("hunt") else {}
 	var visible: bool = mode=="game" and model.phase=="Combat" and state in ["available","active","cleared","returning"]
@@ -1337,7 +1337,7 @@ func _draw_defenders() -> void:
 func _draw_minimap() -> void:
 	if model == null or model.enemies == null:
 		return
-	var mm_rect = Rect2(1100, 1660, 160, 90)
+	var mm_rect = Rect2(20, 400, 160, 90)
 	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
 	# 맵 경계
 	draw_rect(Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10)), Color(0.15,0.2,0.15,0.3), false, 1)
