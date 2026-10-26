@@ -1252,8 +1252,10 @@ func _can_hunt_return() -> bool:
 	return mode=="game" and modal=="" and model.phase=="Combat" and model.hp>0 and model.respawn_left<=0 and model.hunt.get("state","") in ["active","cleared"]
 
 func hunt_summary() -> Dictionary:
+	if model == null or model.hunt == null:
+		return {"visible":false,"state":"","title":"","detail":"","pos":Vector2.ZERO,"radius":0.0,"emergency":False,"entry_blocked":False,"can_start":False,"can_return":False,"return_rect":Rect2()}
 	var state: String = str(model.hunt.get("state",""))
-	var rules: Dictionary = model.tempo.hunt
+	var rules: Dictionary = model.tempo.hunt if model.tempo != null and model.tempo.has("hunt") else {}
 	var visible: bool = mode=="game" and model.phase=="Combat" and state in ["available","active","cleared","returning"]
 	var emergency: bool = model.base_hp/maxf(1,model.max_base_hp)<=float(rules.emergency_castle_ratio)
 	var blocked: bool = state=="available" and model.base_hp/maxf(1,model.max_base_hp)<=float(rules.min_castle_ratio)
@@ -1333,6 +1335,8 @@ func _draw_defenders() -> void:
 			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
 func _draw_minimap() -> void:
+	if model == null or model.enemies == null:
+		return
 	var mm_rect = Rect2(1100, 1660, 160, 90)
 	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
 	# 맵 경계
@@ -1428,12 +1432,14 @@ func _set_coach(title: String, body: String, duration: float) -> void:
 	coach_left = duration
 
 func _status_content() -> Dictionary:
-	if model.boss_pattern_left>0:
+	if model == null or model.boss_pattern_left == null:
+		return {"title":"","body":"","danger":false}
+	if model.boss_pattern_left > 0:
 		match model.boss_pattern:
 			"cannon": return {"title":_t("combat.cannon",{"seconds":_cooldown_text(model.boss_pattern_left)}),"body":"","danger":true}
 			"smash": return {"title":_t("combat.smash"),"body":"","danger":true}
 			"debris": return {"title":_t("combat.debris"),"body":"","danger":true}
-	if model.respawn_left>0:
+	if model.respawn_left > 0:
 		return {"title":_t("combat.respawn",{"seconds":int(ceilf(model.respawn_left))}),"body":"","danger":true}
 	if not model.hazards.is_empty():
 		return {"title":_t("combat.hazard"),"body":"","danger":true}
@@ -1457,6 +1463,8 @@ func _draw_status_strip() -> void:
 	ui_paint=Vector3.ONE
 
 func _draw_controls() -> void:
+	if model == null:
+		return
 	var stick: Vector2 = joystick_center
 	_set_ui_paint(paint_controls.stick)
 	draw_circle(stick,66,_ui_fill(Color(0.025,0.03,0.025,0.68)))
