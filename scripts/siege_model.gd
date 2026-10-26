@@ -1055,11 +1055,30 @@ func _step_enemies(dt: float):
 				e.summon_timer = 5.0
 				spawn_enemy("crawler", clamp_position(e.pos + Vector2(1,0)), false)
 				_effect("summon", e.pos, 2.0, 0.6)
-		if e.kind == "flyer":
-			e.pos.y -= float(e.speed) * dt * 0.3
-			e.pos.y = maxf(4.0, e.pos.y)
-			e.pos = clamp_position(e.pos)
-		if e.telegraph>0:
+		if e.kind == "healer":
+			e.heal_timer = maxf(0, float(e.get("heal_timer",0.0)) - dt)
+			if e.heal_timer <= 0:
+				e.heal_timer = 3.0
+				for other in enemies:
+					if other.id != e.id and other.hp > 0 and other.pos.distance_to(e.pos) <= 6:
+						other.hp = minf(other.max_hp, other.hp + 15)
+						_effect("heal", other.pos, 1.0, 0.4)
+				_effect("heal", e.pos, 2.0, 0.5)
+		if e.kind == "shooter":
+			if target_name == "hero" and distance < 4 and not e.retreated:
+				e.pos = clamp_position(e.pos + (e.pos - pos).normalized() * 1.5)
+				e.retreated = true
+				distance = e.pos.distance_to(target)
+			elif distance > 7 and e.retreated:
+				e.retreated = false
+		if e.kind == "skirmisher" and e.attack_timer <= 0 and target_name == "hero" and distance < 3:
+			e.retreated = true
+			e.retreat_left = 0.6
+		if e.get("retreated", false) and e.retreat_left > 0:
+			e.pos = clamp_position(e.pos + (e.pos - target).normalized() * float(e.speed) * 1.2 * dt)
+			e.retreat_left -= dt
+			if e.retreat_left <= 0:
+				e.retreated = false
 			e.telegraph -= dt
 			if e.telegraph<=0: _enemy_attack(e)
 			continue
@@ -1091,10 +1110,6 @@ func _step_enemies(dt: float):
 				target_name = "defender"
 				e.defender_target_id = ally.id
 		var distance = e.pos.distance_to(target)
-		if e.kind=="shooter" and target_name=="hero" and distance<3 and not e.retreated:
-			e.pos = clamp_position(e.pos+(e.pos-pos).normalized()*2)
-			e.retreated = true
-			distance = e.pos.distance_to(target)
 		if distance <= reach:
 			if e.attack_timer<=0:
 				e.telegraph = 0.9 if e.kind=="siege" else (0.45 if e.kind=="shooter" else 0.32)
@@ -1759,7 +1774,7 @@ func _trigger_kill_arena() -> void:
 
 func _trigger_special_event() -> void:
 	phase = "SpecialEvent"
-	special_event = {"active":true,"enemies_spawned":0,"max_enemies":20,"timer":0.0,"duration":45.0}
+	special_event = {"active":true,"enemies_spawned":0,"max_enemies":20,"timer":0.0,"duration":45.0,"spawn_timer":0.0}
 	announce("SPECIAL EVENT - Bonus arena! Kill all enemies for extra rewards!")
 	log_event("special_event_start",{"wave":completed_wave})
 	for i in 8:
@@ -1787,9 +1802,11 @@ func _step_special_event(dt: float) -> void:
 		special_event = {}
 		return
 	# Spawn more enemies over time
-	if special_event["timer"] % 5.0 < dt and special_event["enemies_spawned"] < special_event["max_enemies"]:
-		var kinds = ["crawler","crawler","skirmisher","shooter"]
-		spawn_enemy(kinds[spawn_rng.randi() % kinds.size()],_spawn_position(),false)
+	special_event["spawn_timer"] -= dt
+	if special_event["spawn_timer"] <= 0 and special_event["enemies_spawned"] < special_event["max_enemies"]:
+		special_event["spawn_timer"] = 5.0
+		var kinds = ["crawler", "crawler", "skirmisher", "shooter"]
+		spawn_enemy(kinds[spawn_rng.randi() % kinds.size()], _spawn_position(), false)
 		special_event["enemies_spawned"] += 1
 
 func _prepare_hunt() -> void:

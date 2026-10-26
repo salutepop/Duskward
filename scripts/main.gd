@@ -527,7 +527,8 @@ func _skill_at(p: Vector2) -> String:
 func skill_center(slot_or_index: Variant) -> Vector2:
 	var index: int = int(slot_or_index) if slot_or_index is int else ["Q","W","E","R","F"].find(str(slot_or_index))
 	index = clampi(index,0,4)
-	return Vector2(1056+(index%2)*122,528+(index/2)*110)
+	# Mobile-friendly bottom row layout for Galaxy S23 and similar devices
+	return Vector2(220+index*150, 1760)
 
 func _begin_skill_pointer(id: int, at: Vector2, slot: String) -> void:
 	if not skill_pointer.is_empty(): return
@@ -1332,7 +1333,7 @@ func _draw_defenders() -> void:
 			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
 func _draw_minimap() -> void:
-	var mm_rect = Rect2(20, 40, 160, 90)
+	var mm_rect = Rect2(1100, 1660, 160, 90)
 	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
 	# 맵 경계
 	draw_rect(Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10)), Color(0.15,0.2,0.15,0.3), false, 1)
