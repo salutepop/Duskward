@@ -2,10 +2,14 @@ class_name CombatStats
 extends RefCounted
 ## Pure stat derivation and mitigation formulas.
 
-static func derived_stats(heroes: Dictionary, items: Dictionary, for_hero: String, for_level: int, equipment: Array) -> Dictionary:
+static func derived_stats(heroes: Dictionary, items: Dictionary, for_hero: String, for_level: int, equipment: Array, bonus: Dictionary = {}) -> Dictionary:
 	var derived: Dictionary = heroes[for_hero].base.duplicate(true)
 	for key in heroes[for_hero].growth:
 		derived[key] = float(derived.get(key, 0)) + float(heroes[for_hero].growth[key]) * (for_level - 1)
+	# Player-allocated stat points sit between level growth and equipment, so a
+	# point spent on strength reads exactly like any other additive stat.
+	for key in bonus:
+		derived[key] = float(derived.get(key, 0)) + float(bonus[key])
 	for id in equipment:
 		if not items.has(id):
 			continue

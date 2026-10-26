@@ -6,6 +6,9 @@ var regions: Dictionary = {}
 var background: Texture2D
 var item_atlas: Texture2D
 var item_regions: Dictionary = {}
+# Draw calls inside a translated layer (menus) must not reset to the identity:
+# art resets to this offset so the caller's layer transform survives.
+var layer: Vector2 = Vector2.ZERO
 
 func _init() -> void:
 	if ResourceLoader.exists("res://assets/art/characters_atlas_v1.png"):
@@ -40,10 +43,10 @@ func sprite(c: CanvasItem, id: String, at: Vector2, height: float, flip: bool = 
 	var source: Rect2 = regions[id]
 	var target: Rect2 = sprite_bounds(id,at,height)
 	if flip:
-		c.draw_set_transform(at,0,Vector2(-1,1))
+		c.draw_set_transform(at+layer,0,Vector2(-1,1))
 		target.position -= at
 		c.draw_texture_rect_region(atlas,target,source,tint)
-		c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+		c.draw_set_transform(layer,0,Vector2.ONE)
 	else:
 		c.draw_texture_rect_region(atlas,target,source,tint)
 	return true
@@ -73,7 +76,7 @@ func terrain(c: CanvasItem, bounds: Rect2, t: float, field: Rect2 = Rect2()) -> 
 		return
 	# Deliberately low-frequency terrain keeps spell and enemy silhouettes legible.
 	# The fallback layout is authored in 1280x720 and mapped onto the arena.
-	c.draw_set_transform(ground.position,0,ground.size/Vector2(1280,720))
+	c.draw_set_transform(ground.position+layer,0,ground.size/Vector2(1280,720))
 	bounds = Rect2(Vector2.ZERO,Vector2(1280,720))
 	for row in range(14):
 		for column in range(34):
@@ -106,12 +109,12 @@ func terrain(c: CanvasItem, bounds: Rect2, t: float, field: Rect2 = Rect2()) -> 
 	sprite(c,"portal",Vector2(1225,341),100,false,Color(0.8,0.8,0.85,0.8))
 	c.draw_arc(Vector2(1215,350),34,0,TAU,40,Color(0.8,0.22,0.25,0.3+sin(t*2)*0.1),2,true)
 	c.draw_rect(bounds,Color("4c625a"),false,1)
-	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	c.draw_set_transform(layer,0,Vector2.ONE)
 
 func castle(c: CanvasItem, at: Vector2, hp_ratio: float, t: float) -> void:
-	c.draw_set_transform(at,0,Vector2(1,0.35))
+	c.draw_set_transform(at+layer,0,Vector2(1,0.35))
 	c.draw_circle(Vector2.ZERO,80,Color(0.02,0.06,0.08,0.55))
-	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	c.draw_set_transform(layer,0,Vector2.ONE)
 	if not sprite(c,"castle",at+Vector2(0,8),156):
 		c.draw_rect(Rect2(at+Vector2(-53,-83),Vector2(106,98)),Color("698080"))
 		c.draw_rect(Rect2(at+Vector2(-17,-25),Vector2(34,40)),Color("1d3541"))
@@ -126,9 +129,9 @@ func castle(c: CanvasItem, at: Vector2, hp_ratio: float, t: float) -> void:
 func hero(c: CanvasItem, at: Vector2, id: String, facing: Vector2, t: float, scale: float = 1.0, moving: bool = false, opacity: float = 1.0) -> void:
 	# A fast walk bob reads as ghosting once the canvas is upscaled on a phone.
 	var bob: float = sin(t*2.2)*0.6
-	c.draw_set_transform(at,0,Vector2(1,0.32))
+	c.draw_set_transform(at+layer,0,Vector2(1,0.32))
 	c.draw_circle(Vector2.ZERO,19*scale,Color(0.02,0.05,0.07,0.55*opacity))
-	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	c.draw_set_transform(layer,0,Vector2.ONE)
 	if sprite(c,id,at+Vector2(0,bob),59*scale,facing.x>0,Color(1,1,1,opacity)):
 		return
 	var col: Color = {"guardian":Color("62b9b9"),"ranger":Color("94b779"),"arcanist":Color("b99cda")}.get(id,Color.WHITE)
@@ -146,9 +149,9 @@ func enemy(c: CanvasItem, at: Vector2, kind: String, t: float, attacking: bool, 
 		return
 	var height: float = enemy_height(kind)
 	var bob: float = sin(t*7+at.x*0.05)*1.3
-	c.draw_set_transform(at,0,Vector2(1,0.34))
+	c.draw_set_transform(at+layer,0,Vector2(1,0.34))
 	c.draw_circle(Vector2.ZERO,height*0.29,Color(0.02,0.04,0.06,0.5*alpha))
-	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	c.draw_set_transform(layer,0,Vector2.ONE)
 	if kind=="elite":
 		if sprite(c,"crawler",at+Vector2(0,bob),height*1.35,false,Color(1,0.74,0.64,alpha)):
 			return
@@ -249,10 +252,10 @@ func skill_icon(c: CanvasItem, at: Vector2, index: int, color: Color, hero_id: S
 			c.draw_arc(at,24,0.25,2.9,24,color,3,true)
 			c.draw_polyline(PackedVector2Array([at+Vector2(0,-16),at+Vector2(12,-2),at+Vector2(8,12),at+Vector2(0,21),at+Vector2(-8,12),at+Vector2(-12,-2),at+Vector2(0,-16)]),color,3,true)
 		"arcanist.2":
-			c.draw_set_transform(at,0,Vector2(1,0.55))
+			c.draw_set_transform(at+layer,0,Vector2(1,0.55))
 			c.draw_arc(Vector2.ZERO,26,0,TAU,32,color,3,true)
 			c.draw_arc(Vector2.ZERO,15,0,TAU,24,color,2,true)
-			c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+			c.draw_set_transform(layer,0,Vector2.ONE)
 			for x in [-18,0,18]:
 				c.draw_line(at+Vector2(x,-5),at+Vector2(x,-23+abs(x)*0.3),color,2,true)
 				c.draw_circle(at+Vector2(x,-23+abs(x)*0.3),2.5,color)
@@ -287,7 +290,7 @@ func item_icon(c: CanvasItem, at: Vector2, id: String, color: Color, scale: floa
 		var target_size: Vector2 = source.size*(52.0*scale/maxf(source.size.x,source.size.y))
 		c.draw_texture_rect_region(item_atlas,Rect2(at-target_size*0.5,target_size),source)
 		return
-	c.draw_set_transform(at,0,Vector2(scale,scale))
+	c.draw_set_transform(at+layer,0,Vector2(scale,scale))
 	if id=="healing_potion":
 		potion_icon(c,Vector2.ZERO,color)
 	elif id.contains("blade") or id in ["blood_edge","sanguine","iron_blade","tempest_glaive"]:
@@ -317,7 +320,7 @@ func item_icon(c: CanvasItem, at: Vector2, id: String, color: Color, scale: floa
 		c.draw_colored_polygon(PackedVector2Array([Vector2(0,-25),Vector2(17,-5),Vector2(10,20),Vector2(-10,20),Vector2(-17,-5)]),color)
 		c.draw_line(Vector2(0,-20),Vector2(0,17),color.lightened(0.5),2,true)
 		c.draw_line(Vector2(-12,-4),Vector2(12,-4),color.lightened(0.4),2,true)
-	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	c.draw_set_transform(layer,0,Vector2.ONE)
 
 func defender(c: CanvasItem, at: Vector2, alive: bool, flash: bool) -> void:
 	# A smaller bow silhouette and blue pennant distinguish local NPCs from the hero.

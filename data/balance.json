@@ -13,6 +13,19 @@
     "defender": 7.0,
     "ally": 8.0
   },
+  "progression": {
+    "points_per_level": 1,
+    "skill_rank_max": 5,
+    "skill_damage_per_rank": 0.15,
+    "skill_cooldown_per_rank": 0.06,
+    "stat_points_per_point": 3,
+    "stats": {
+      "str": {"ad": 1.8, "armor": 0.5},
+      "agi": {"ad": 0.7, "attack_speed_bonus": 0.01, "move_speed": 0.03},
+      "int": {"sp": 1.8, "max_energy": 2, "cooldown_reduction": 0.005},
+      "vit": {"max_hp": 16, "armor": 0.3}
+    }
+  },
   "mvp": {
     "hero": "guardian",
     "wave_count": 15,

@@ -7,7 +7,7 @@ const START = Vector2(16, 24)
 const BOSS_SPAWN = Vector2(84, 24)
 const SAVE_PATH = "user://emberwatch_checkpoint.json"
 const BUILD = "0.3.0"
-const SAVE_SCHEMA = 4
+const SAVE_SCHEMA = 5
 var data: Dictionary = {}
 var ruleset: String = "fast"
 var tempo: Dictionary = {}
@@ -27,6 +27,11 @@ var base_hp = 6000.0
 var gold = 300
 var xp = 0
 var level = 1
+# Growth points are the only source of power beyond items: one per level, spent
+# either on a skill rank or on a chunk of a hero stat.
+var unspent_points = 0
+var stat_points: Dictionary = {"str":0,"agi":0,"int":0,"vit":0}
+var skill_ranks: Dictionary = {"Q":1,"W":1,"E":1,"R":1}
 var stats: Dictionary = {}
 var hp = 900.0
 var energy = 100.0
@@ -136,6 +141,9 @@ func reset(new_hero: String, new_seed: int = 12345):
 	gold = int(data.rewards.starting_gold)
 	xp = 0
 	level = 1
+	unspent_points = 0
+	stat_points = {"str":0,"agi":0,"int":0,"vit":0}
+	skill_ranks = {"Q":1,"W":1,"E":1,"R":1}
 	inventory = []
 	potions = 0
 	cooldowns = {"Q":0.0,"W":0.0,"E":0.0,"R":0.0,"F":0.0}
@@ -204,7 +212,7 @@ func reset(new_hero: String, new_seed: int = 12345):
 	announce("Choose your gear. The first wave starts when you are ready.")
 
 func recalculate_stats():
-	stats = _combat_stats.derived_stats(heroes, items, hero_id, level, inventory)
+	stats = _combat_stats.derived_stats(heroes, items, hero_id, level, inventory, stat_bonus())
 	# Set effects
 	_active_set_effects = {}
 	var set_counts: Dictionary = {}
@@ -236,8 +244,74 @@ func recalculate_stats():
 	hp = minf(hp, stats.max_hp)
 	energy = minf(energy, stats.max_energy)
 
-func derived_stats(for_hero: String, for_level: int, equipment: Array) -> Dictionary:
-	return _combat_stats.derived_stats(heroes, items, for_hero, for_level, equipment)
+func derived_stats(for_hero: String, for_level: int, equipment: Array, points: Variant = null) -> Dictionary:
+	return _combat_stats.derived_stats(heroes, items, for_hero, for_level, equipment, stat_bonus(points))
+
+func progression() -> Dictionary:
+	return data.get("progression",{})
+
+func stat_definitions() -> Dictionary:
+	return progression().get("stats",{})
+
+func stat_points_per_spend() -> int:
+	return maxi(1,int(progression().get("stat_points_per_point",3)))
+
+func max_skill_rank() -> int:
+	return maxi(1,int(progression().get("skill_rank_max",5)))
+
+func skill_rank(slot: String) -> int:
+	return clampi(int(skill_ranks.get(slot,1)),1,max_skill_rank())
+
+# Rank 1 is the ability exactly as authored. Each further rank adds damage and
+# trims the cooldown, so a point spent here is felt on the next cast.
+func skill_power(slot: String) -> float:
+	return 1.0+float(progression().get("skill_damage_per_rank",0.15))*float(skill_rank(slot)-1)
+
+func skill_cooldown_scale(slot: String) -> float:
+	return maxf(0.4,1.0-float(progression().get("skill_cooldown_per_rank",0.06))*float(skill_rank(slot)-1))
+
+# Stat points aggregate into the same keys equipment uses, so one code path
+# feeds combat, the shop preview and the growth panel.
+# A null argument means "the live allocation"; an explicit dictionary (even an
+# empty one) is used verbatim, which matters when validating a checkpoint while
+# the current session already has points spent.
+func stat_bonus(points: Variant = null) -> Dictionary:
+	var source: Dictionary = stat_points if points == null else points
+	var result: Dictionary = {}
+	var defs: Dictionary = stat_definitions()
+	for id in source:
+		if not defs.has(id): continue
+		for key in defs[id]:
+			result[key] = float(result.get(key,0))+float(defs[id][key])*float(source[id])
+	return result
+
+func can_spend_point(kind: String, value: String) -> Dictionary:
+	if unspent_points<=0: return {"ok":false,"reason":"no_points"}
+	if kind=="stat":
+		if not stat_definitions().has(value): return {"ok":false,"reason":"unknown_stat"}
+		return {"ok":true}
+	if kind=="skill":
+		var a: Dictionary = ability(value)
+		if a.is_empty() or level<int(a.get("unlock_level",1)): return {"ok":false,"reason":"locked"}
+		if skill_rank(value)>=max_skill_rank(): return {"ok":false,"reason":"max_rank"}
+		return {"ok":true}
+	return {"ok":false,"reason":"unknown"}
+
+func spend_point(kind: String, value: String) -> Dictionary:
+	var allowed: Dictionary = can_spend_point(kind,value)
+	if not allowed.get("ok",false): return allowed
+	unspent_points -= 1
+	if kind=="stat":
+		stat_points[value] = int(stat_points.get(value,0))+stat_points_per_spend()
+		recalculate_stats()
+		# Vitality raises the ceiling; grant the new headroom immediately so the
+		# bar does not silently lose 48 points of health.
+		var gained_hp: float = stat_points_per_spend()*float(stat_definitions()[value].get("max_hp",0))
+		if respawn_left<=0: hp = minf(stats.max_hp,hp+gained_hp)
+		energy = minf(stats.max_energy,energy)
+		return {"ok":true,"kind":"stat","value":value,"amount":stat_points_per_spend()}
+	skill_ranks[value] = skill_rank(value)+1
+	return {"ok":true,"kind":"skill","value":value,"rank":skill_rank(value)}
 
 static func mitigation(defense: float) -> float:
 	return CombatStats.mitigation(defense)
@@ -635,12 +709,14 @@ func _update_level():
 	for entry in data.level_thresholds:
 		if xp >= entry.cumulative_xp: level = int(entry.level)
 	if level != old:
+		var gained_points: int = (level-old)*maxi(1,int(progression().get("points_per_level",1)))
+		unspent_points += gained_points
 		for gained in range(old+1,level+1): metrics.level_times[str(gained)] = elapsed
 		var old_max = stats.max_hp
 		recalculate_stats()
 		if respawn_left <= 0: hp += stats.max_hp-old_max
-		announce("LEVEL %d  •  Your power grows" % level)
-		log_event("level_up",{"level":level})
+		announce("LEVEL %d  •  +%d growth point" % [level,gained_points])
+		log_event("level_up",{"level":level,"points":gained_points})
 
 func _nearest(origin: Vector2, reach: float, prefer_weakness: bool = true) -> Dictionary:
 	var best: Dictionary = {}
@@ -868,7 +944,7 @@ func _step_casts(dt: float):
 	var a = ability(c.slot)
 	energy -= a.energy_cost
 	invulnerable_left = 0
-	cooldowns[c.slot] = ceilf(float(a.cooldown_seconds)*(1-stats.cooldown_reduction)*30)/30.0
+	cooldowns[c.slot] = ceilf(float(a.cooldown_seconds)*(1-stats.cooldown_reduction)*skill_cooldown_scale(c.slot)*30)/30.0
 	metrics.casts += 1
 	metrics.casts_by_slot[c.slot] = int(metrics.casts_by_slot.get(c.slot,0))+1
 	log_event("cast",{"slot":c.slot,"hero":hero_id})
@@ -880,7 +956,7 @@ func _step_casts(dt: float):
 
 func _execute_cast(c: Dictionary):
 	var a = ability(c.slot)
-	var damage = float(a.base_damage)+stats.ad*float(a.ad_coefficient)+stats.sp*float(a.sp_coefficient)
+	var damage = (float(a.base_damage)+stats.ad*float(a.ad_coefficient)+stats.sp*float(a.sp_coefficient))*skill_power(c.slot)
 	var hits: Array = []
 	var center: Vector2 = c.aim
 	var dist = c.origin.distance_to(center)
@@ -893,7 +969,7 @@ func _execute_cast(c: Dictionary):
 			_effect("cleave",c.origin,4,0.35,c.dir)
 		"guardian.W":
 			if respawn_left <= 0:
-				add_shield("guardian_w",180+stats.max_hp*0.12,4)
+				add_shield("guardian_w",(180+stats.max_hp*0.12)*skill_power("W"),4)
 			for e in _targets(pos,5,60):
 				if e.kind not in ["siege","boss","weakness"]: e.taunt_left = 2
 			_effect("taunt",pos,5,0.5)
@@ -927,7 +1003,7 @@ func _execute_cast(c: Dictionary):
 			_effect("nova",center,3.5,0.5)
 		"arcanist.W":
 			if respawn_left <= 0:
-				add_shield("arcanist_w",160+stats.sp*1.2,4)
+				add_shield("arcanist_w",(160+stats.sp*1.2)*skill_power("W"),4)
 			_effect("shield",pos,2,0.5)
 		"arcanist.E":
 			pulse_zones.append({"pos":center,"follow":false,"left":1.0,"life":4.0,"count":4,"damage":damage,"type":"magic","radius":4.0,"cap":8,"slow":0.35,"source":"arcanist.E"})
@@ -1439,7 +1515,7 @@ func use_potion() -> bool:
 
 func save_checkpoint() -> bool:
 	if phase not in ["Preparation","FinalPreparation"]: return false
-	var save = {"schema":SAVE_SCHEMA,"build":BUILD,"content_hash":content_hash,"hero":hero_id,"seed":seed_value,"rng_state":str(rng.state),"spawn_rng_state":str(spawn_rng.state),"camp_rng_state":str(camp_rng.state),"ruleset":ruleset,"tempo_version":str(tempo.version),"phase":phase,"completed_wave":completed_wave,"base_hp":base_hp,"hp":hp,"energy":energy,"gold":gold,"xp":xp,"level":level,"inventory":inventory,"potions":potions,"elapsed":elapsed,"metrics":metrics,"cooldowns":cooldowns,"potion_cd":potion_cd,"sanctuary_cd":sanctuary_cd}
+	var save = {"schema":SAVE_SCHEMA,"build":BUILD,"content_hash":content_hash,"hero":hero_id,"seed":seed_value,"rng_state":str(rng.state),"spawn_rng_state":str(spawn_rng.state),"camp_rng_state":str(camp_rng.state),"ruleset":ruleset,"tempo_version":str(tempo.version),"phase":phase,"completed_wave":completed_wave,"base_hp":base_hp,"hp":hp,"energy":energy,"gold":gold,"xp":xp,"level":level,"unspent_points":unspent_points,"stat_points":stat_points,"skill_ranks":skill_ranks,"inventory":inventory,"potions":potions,"elapsed":elapsed,"metrics":metrics,"cooldowns":cooldowns,"potion_cd":potion_cd,"sanctuary_cd":sanctuary_cd}
 	var temporary = SAVE_PATH+".tmp"
 	var file = FileAccess.open(temporary,FileAccess.WRITE)
 	if file==null: return false
@@ -1485,6 +1561,11 @@ func load_checkpoint() -> bool:
 	gold = maxi(0,int(save.gold))
 	xp = maxi(0,int(save.xp))
 	level = clampi(int(save.level),1,12)
+	unspent_points = clampi(int(save.get("unspent_points",0)),0,99)
+	for id in stat_points:
+		stat_points[id] = clampi(int(save.get("stat_points",{}).get(id,0)),0,99)
+	for slot in skill_ranks:
+		skill_ranks[slot] = clampi(int(save.get("skill_ranks",{}).get(slot,1)),1,max_skill_rank())
 	inventory = save.inventory.duplicate()
 	potions = clampi(int(save.potions),0,3)
 	elapsed = float(save.elapsed)
@@ -1559,7 +1640,21 @@ func _read_valid_checkpoint(path: String) -> Dictionary:
 	if not save.get("inventory") is Array or save.inventory.size()>6: return {}
 	for id in save.inventory:
 		if not id is String or not items.has(id) or id=="healing_potion": return {}
-	var saved_stats = derived_stats(save.hero,int(save.level),save.inventory)
+	if not save.get("unspent_points") is int and not save.get("unspent_points") is float: return {}
+	if not save.get("stat_points") is Dictionary or not save.get("skill_ranks") is Dictionary: return {}
+	for id in save.stat_points:
+		if not stat_definitions().has(str(id)) or not (save.stat_points[id] is int or save.stat_points[id] is float): return {}
+		if save.stat_points[id]<0 or save.stat_points[id]>99 or int(save.stat_points[id])%stat_points_per_spend()!=0: return {}
+	for slot in ["Q","W","E","R"]:
+		var rank = save.skill_ranks.get(slot)
+		if not (rank is int or rank is float) or rank<1 or rank>max_skill_rank() or int(rank)!=float(rank): return {}
+	# Growth points are earned only by levelling: a save cannot hold more spent
+	# and unspent points than the level grants.
+	var growth_spent: int = int(save.unspent_points)
+	for slot in ["Q","W","E","R"]: growth_spent += int(save.skill_ranks[slot])-1
+	for id in save.stat_points: growth_spent += int(save.stat_points[id])/stat_points_per_spend()
+	if growth_spent > (int(save.level)-1)*maxi(1,int(progression().get("points_per_level",1))): return {}
+	var saved_stats = derived_stats(save.hero,int(save.level),save.inventory,save.stat_points)
 	if save.hp<=0 or save.hp>saved_stats.max_hp or save.energy<0 or save.energy>saved_stats.max_energy: return {}
 	if not save.get("cooldowns") is Dictionary or save.cooldowns.size()!=5: return {}
 	for slot in ["Q","W","E","R","F"]:

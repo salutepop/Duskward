@@ -44,6 +44,7 @@ var SKILL_NAMES: Dictionary = {}
 var SKILL_TIPS: Dictionary = {}
 var STAT_NAMES: Dictionary = {}
 const PERCENT_STATS = ["attack_speed_bonus", "crit_chance", "cooldown_reduction", "lifesteal"]
+const GROWTH_STAT_NAMES = {"ad":"공격력","armor":"방어력","sp":"주문력","max_energy":"마나","cooldown_reduction":"쿨감","attack_speed_bonus":"공속","move_speed":"이동"}
 var copy = preload("res://scripts/ui_copy.gd").new()
 var model = Model.new()
 var art = Art.new()
@@ -628,13 +629,14 @@ func _action_allowed(action: String, value: String) -> bool:
 		"hunt_return": return _can_hunt_return()
 		"hunt_start": return _can_hunt_start()
 		"title", "restart": return mode == "game" and modal in ["pause", "result"]
-		"close": return modal in ["shop", "pause", "help", "credits"]
+		"close": return modal in ["shop", "growth", "pause", "help", "credits"]
+		"growth": return mode == "game" and modal == "growth"
 		"sound": return mode == "game" and modal == "pause"
 		"keyboard": return modal == "help" and help_page == 0
 		"help_page": return modal == "help"
 		"modal":
 			if mode == "title": return modal == "" and value in ["help", "credits"]
-			return (modal == "" and value in ["shop", "help", "pause"]) or (modal == "pause" and value == "help")
+			return (modal == "" and value in ["shop", "growth", "help", "pause"]) or (modal == "pause" and value in ["help", "growth"])
 	return false
 
 func _shop_quote_signature() -> Dictionary:
@@ -669,6 +671,22 @@ func _action(action: String, value: String) -> void:
 				_notify(_notice_text(model.notice))
 		"modal": _open_modal(value)
 		"close": _close_modal()
+		"growth":
+			var parts: PackedStringArray = value.split(":")
+			var kind: String = str(parts[0])
+			var pick: String = str(parts[1]) if parts.size()>1 else ""
+			var result: Dictionary = model.spend_point(kind,pick)
+			if result.get("ok",false):
+				var label: String = _t("growth.stat."+pick) if kind=="stat" else SKILL_NAMES[model.hero_id][maxi(0,["Q","W","E","R"].find(pick))]
+				_notify(_t("growth.spent_stat",{"name":label,"amount":int(result.get("amount",0))}) if kind=="stat" else _t("growth.spent_skill",{"name":label,"rank":int(result.get("rank",1))}))
+				_sound_variant(760, 0.08)
+				model.save_checkpoint()
+			else:
+				match str(result.get("reason","")):
+					"no_points": _notify(_t("growth.no_points"))
+					"max_rank": _notify(_t("growth.skill_max"))
+					"locked": _notify(_t("skill.locked",{"level":int(model.ability(pick).get("unlock_level",1))}))
+			_invalidate_hits()
 		"title":
 			model.save_checkpoint()
 			mode = "title"
@@ -882,9 +900,11 @@ func _draw() -> void:
 	if mode == "title":
 		art.backdrop(self,time,SIZE)
 		hit_offset = _modal_offset()
+		art.layer = hit_offset
 		draw_set_transform(hit_offset,0,Vector2.ONE)
 		_draw_title()
 		draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+		art.layer = Vector2.ZERO
 		hit_offset = Vector2.ZERO
 	else:
 		_draw_arena()
@@ -905,14 +925,17 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, SIZE), Color(0.02,0.025,0.02,0.66))
 		hits.clear()
 		hit_offset = _modal_offset()
+		art.layer = hit_offset
 		draw_set_transform(hit_offset,0,Vector2.ONE)
 		match modal:
 			"shop": _draw_shop()
+			"growth": _draw_growth()
 			"pause": _draw_pause()
 			"help": _draw_help()
 			"credits": _draw_credits()
 			"result": _draw_result()
 		draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+		art.layer = Vector2.ZERO
 		hit_offset = Vector2.ZERO
 	if toast_time>0 and not (mode=="game" and modal=="" and bool(_status_content().danger)):
 		var tw: float = minf(1150,maxf(300,font.get_string_size(toast,HORIZONTAL_ALIGNMENT_LEFT,-1,19).x+48))
@@ -929,7 +952,7 @@ func _draw() -> void:
 		_label("FIXTURE · 상태 주입 · 플레이 검증 아님",Vector2(640,703)+low,18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 
 func control_painted_rects() -> Dictionary:
-	var result: Dictionary = {"stick":Rect2(joystick_center-Vector2(68,68),Vector2(136,136)),"potion":_off(Rect2(877,595,86,104),_anchor("bottom_right")),"hud_hero":Rect2(24,22,340,140),"hud_castle":_off(Rect2(424,22,432,100),_anchor("center")),"hud_boss":_off(Rect2(424,130,432,54),_anchor("center")),"hud_gold":_off(Rect2(890,22,158,42),_anchor("right")),"hud_shop":_off(Rect2(1070,22,80,80),_anchor("right")),"hud_pause":_off(Rect2(1166,22,90,80),_anchor("right"))}
+	var result: Dictionary = {"stick":Rect2(joystick_center-Vector2(68,68),Vector2(136,136)),"potion":_off(Rect2(877,595,86,104),_anchor("bottom_right")),"hud_hero":Rect2(24,22,340,140),"hud_castle":_off(Rect2(424,22,432,100),_anchor("center")),"hud_boss":_off(Rect2(424,130,432,54),_anchor("center")),"hud_gold":_off(Rect2(840,22,160,42),_anchor("right")),"hud_growth":_off(Rect2(1008,22,72,80),_anchor("right")),"hud_shop":_off(Rect2(1086,22,80,80),_anchor("right")),"hud_pause":_off(Rect2(1172,22,84,80),_anchor("right"))}
 	for slot in ["Q","W","E","R","F"]: result[slot]=Rect2(skill_center(slot)-Vector2(50,50),Vector2(100,112))
 	return result
 
@@ -1475,7 +1498,7 @@ func _draw_minimap() -> void:
 	var inner: Rect2 = Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10))
 	# Unexplored ground is a dim wash; vision discs lift it so the seen area reads
 	# at a glance instead of being an invisible 6%-alpha overlay.
-	draw_rect(inner, Color(0.10,0.13,0.09,1.0))
+	draw_rect(inner, Color(0.14,0.18,0.12,1.0))
 	var to_map = func(p: Vector2) -> Vector2:
 		return inner.position + Vector2(p.x/WORLD.x*inner.size.x, p.y/WORLD.y*inner.size.y)
 	var sight: Array[Dictionary] = vision_sources()
@@ -1546,13 +1569,19 @@ func _draw_hud() -> void:
 	else:
 		_label(_phase_label(),Vector2(640,113)+mid,18,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
 	_set_ui_paint(paint_controls.hud_gold)
-	_label(_t("hud.gold",{"gold":model.gold}),Vector2(1048,55)+right,26,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
+	_label(_t("hud.gold",{"gold":model.gold}),Vector2(1000,55)+right,26,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
 	ui_paint=Vector3.ONE
-	_button(_off(Rect2(1070,22,80,80),right),_t("common.shop"),"modal","shop",false,true,21)
-	_button(_off(Rect2(1166,22,90,80),right),"","modal","pause")
+	# The growth button turns gold the moment a point is available, so levelling
+	# is visible without opening another screen.
+	_button(_off(Rect2(1008,22,72,80),right),_t("growth.button"),"modal","growth",model.unspent_points>0,true,19)
+	if model.unspent_points>0:
+		_panel(_off(Rect2(1044,26,32,24),right),Color("2a1f12"),GOLD,2)
+		_label(str(model.unspent_points),Vector2(1060,44)+right,17,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
+	_button(_off(Rect2(1086,22,80,80),right),_t("common.shop"),"modal","shop",false,true,20)
+	_button(_off(Rect2(1172,22,84,80),right),"","modal","pause")
 	_set_ui_paint(paint_controls.hud_pause)
-	draw_rect(_off(Rect2(1198,47,6,30),right),_ui_ink(PAPER))
-	draw_rect(_off(Rect2(1217,47,6,30),right),_ui_ink(PAPER))
+	draw_rect(_off(Rect2(1199,47,6,30),right),_ui_ink(PAPER))
+	draw_rect(_off(Rect2(1218,47,6,30),right),_ui_ink(PAPER))
 	ui_paint=Vector3.ONE
 	for enemy in model.enemies:
 		if str(enemy.kind)=="boss":
@@ -1652,6 +1681,10 @@ func _draw_controls() -> void:
 		if float(skill_flash.get(slot,0))>0: draw_arc(center,49,0,TAU,48,_ui_ink(PAPER),3,true)
 		_panel(Rect2(center+Vector2(-49,37),Vector2(98,24)),Color("121912"),LINE,2)
 		_label(SKILL_NAMES[model.hero_id][i],center+Vector2(0,56),20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
+		var rank: int = model.skill_rank(slot)
+		if rank>1:
+			_panel(Rect2(center+Vector2(16,-53),Vector2(34,22)),Color("121912"),GOLD,2)
+			_label("R%d" % rank,center+Vector2(33,-37),14,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
 		_record_hit(Rect2(center-Vector2(49,49),Vector2(98,110)),"skill",slot)
 	ui_paint=Vector3.ONE
 	if not skill_pointer.is_empty():
@@ -1822,6 +1855,57 @@ func _shop_block_label(item: Dictionary, quote: Dictionary) -> String:
 	if model.completed_wave<int(item.get("unlock_after_wave",0)): return _t("shop.unlock",{"wave":int(item.unlock_after_wave)})
 	if model.gold<int(quote.get("cost",item.total_price)): return _t("shop.not_enough_gold")
 	return _reason(str(quote.get("reason","Ready")))
+
+func _draw_growth() -> void:
+	_panel(Rect2(230,56,820,608),Color("1b211b"),GOLD,6)
+	_label(_t("growth.title"),Vector2(270,112),34,PAPER)
+	_label(_t("growth.points",{"points":model.unspent_points}),Vector2(1010,110),22,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
+	_label(_t("growth.hint"),Vector2(270,146),18,MUTED)
+	_label(_t("growth.stats"),Vector2(270,186),20,GOLD)
+	_label(_t("growth.skills"),Vector2(620,186),20,GOLD)
+	var stat_ids: Array = ["str","agi","int","vit"]
+	for i in range(stat_ids.size()):
+		var id: String = str(stat_ids[i])
+		var rect: Rect2 = Rect2(270,200+i*86,330,76)
+		_panel(rect,Color("232a23"),LINE,3)
+		_label(_t("growth.stat."+id),rect.position+Vector2(16,30),22,PAPER)
+		_label(str(int(model.stat_points.get(id,0))),rect.position+Vector2(62,30),22,GOLD)
+		_label(_growth_stat_effect(id),rect.position+Vector2(16,57),16,MUTED)
+		_label("+"+str(model.stat_points_per_spend()),Vector2(rect.end.x-16,rect.position.y+30),20,GOLD,HORIZONTAL_ALIGNMENT_RIGHT)
+		_record_hit(rect,"growth","stat:"+id)
+	for i in range(4):
+		var slot: String = ["Q","W","E","R"][i]
+		var ability: Dictionary = model.ability(slot)
+		var rect: Rect2 = Rect2(620,200+i*86,390,76)
+		var unlocked: bool = model.level>=int(ability.get("unlock_level",1))
+		var rank: int = model.skill_rank(slot)
+		_panel(rect,Color("232a23"),LINE,3)
+		art.skill_icon(self,rect.position+Vector2(36,38),i,PAPER if unlocked else Color("8e9183"),model.hero_id)
+		_label(SKILL_NAMES[model.hero_id][i],rect.position+Vector2(66,26),21,PAPER if unlocked else MUTED)
+		# Pips carry the rank: five dots read faster than a number at this size.
+		for dot in range(model.max_skill_rank()):
+			draw_circle(rect.position+Vector2(70+dot*20,46),5.0,GOLD if unlocked and dot<rank else Color("4a5044"))
+		var detail: String = _t("growth.skill_locked",{"level":int(ability.get("unlock_level",1))}) if not unlocked else (
+			_t("growth.skill_max") if rank>=model.max_skill_rank() else
+			_t("growth.skill_effect",{
+				"damage":int(round(float(model.progression().get("skill_damage_per_rank",0.15))*100)),
+				"cooldown":int(round(float(model.progression().get("skill_cooldown_per_rank",0.06))*100))}))
+		_label(detail,Vector2(rect.end.x-16,rect.position.y+30),16,MUTED,HORIZONTAL_ALIGNMENT_RIGHT)
+		_label("R%d / %d" % [rank,model.max_skill_rank()],Vector2(rect.end.x-16,rect.position.y+58),17,GOLD if unlocked else MUTED,HORIZONTAL_ALIGNMENT_RIGHT)
+		_record_hit(rect,"growth","skill:"+slot)
+	if model.unspent_points<=0:
+		_label(_t("growth.empty"),Vector2(270,572),18,MUTED)
+	_button(Rect2(870,584,140,56),_t("growth.close"),"close","",false,true,21)
+
+func _growth_stat_effect(id: String) -> String:
+	var parts: Array[String] = []
+	var defs: Dictionary = model.stat_definitions().get(id,{})
+	for key in defs:
+		var value: float = float(defs[key])*float(model.stat_points_per_spend())
+		var number: String = ("%.1f%%" % (value*100) if value*100<10 else "%d%%" % roundi(value*100)) if key in PERCENT_STATS else ("%d" % int(value) if is_equal_approx(value,float(int(value))) else "%.1f" % value)
+		# Abbreviated labels: the full stat names overflow a 330px row.
+		parts.append("%s +%s" % [GROWTH_STAT_NAMES.get(key,STAT_NAMES.get(key,key)),number])
+	return " · ".join(PackedStringArray(parts))
 
 func _draw_pause() -> void:
 	_panel(Rect2(398,84,484,552),Color("1b211b"),GOLD,6)

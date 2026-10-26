@@ -13,11 +13,11 @@ Defend the castle through fifteen waves, then defeat the Rampart Breaker. Move i
 - Equipment transactions happen only between waves. Opening the shop pauses this solo game. Backgrounding the application pauses and releases touch input. Return from the pause menu to resume deliberately.
 - Checkpoints are saved at preparation boundaries and after shopping. Leaving during combat restarts from the previous preparation checkpoint; leaving during the boss restarts final preparation. This is not mid-combat save/restore.
 
-The experimental 0.3.0 checkpoint format (schema 4) separates combat, lane and camp random streams, preserves exact HP/mana, and binds the active tempo profile. Older prototype schema 1–3 or different-profile checkpoints cannot be continued; the game explains the incompatibility and a new game remains available. See `docs/TEMPO_CHANGELOG.md`.
+The experimental 0.3.0 checkpoint format (schema 5) separates combat, lane and camp random streams, preserves exact HP/mana, and binds the active tempo profile. Older prototype schema 1–3 or different-profile checkpoints cannot be continued; the game explains the incompatibility and a new game remains available. See `docs/TEMPO_CHANGELOG.md`.
 
 ## Scope
 
-Implemented: three selectable heroes, fifteen skills, all twenty-eight catalog items with recipes/stats/unique effects, eight ordinary enemy types, fifteen explicitly budgeted waves, destructible boss cores and three telegraphed boss patterns, reinforcement thresholds/enrage, leveling, death/respawn, healing, checkpoint save/restore, pause/restart, and win/loss.
+Implemented: three selectable heroes, fifteen skills, all twenty-eight catalog items with recipes/stats/unique effects, eight ordinary enemy types, fifteen explicitly budgeted waves, destructible boss cores and three telegraphed boss patterns, reinforcement thresholds/enrage, levelling with growth points (skill ranks or stat allocation), death/respawn, healing, checkpoint save/restore, pause/restart, and win/loss.
 
 Deliberate mobile/solo adaptations: fixed twin-hand touch controls and assisted aim rather than RTS mouse commands; one open arena rather than multiplayer lanes; unlimited first preparation rather than a thirty-second first-purchase countdown; a separate potion reserve instead of consuming an equipment slot. Two killable local castle defenders and finite optional hunts on waves 4/8 adapt the side-objective concept to solo play; the castle battle continues during a hunt. These are not multiplayer teammates or the supplied document's full expedition system. Multiplayer networking, counteroffensive expansion and online features are not included.
 

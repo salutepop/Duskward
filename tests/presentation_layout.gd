@@ -54,6 +54,17 @@ func audit():
  main._action("buy","")
  await capture("shop_potion_sell")
  main._action("close","")
+ # Growth panel: three points at level 4, so every row is live.
+ main._start_new()
+ main.model.xp=510
+ main.model._update_level()
+ check(main.model.level==4 and main.model.unspent_points==3,"level ups grant one growth point each")
+ main._open_modal("growth")
+ await capture("growth")
+ main._action("growth","stat:str")
+ await capture("growth_spent")
+ check(main.model.stat_points.str==3 and main.model.unspent_points==2,"growth panel spends a point into a stat")
+ main._action("close","")
  # Real device canvases: 19.5:9 phone (1560x720) and 16:10 tablet (1280x800).
  for view in [Vector2(1560,720),Vector2(1280,800)]:
   main._apply_layout(view)
@@ -61,6 +72,11 @@ func audit():
   await capture("device%dx%d_preparation" % [int(view.x),int(view.y)])
   main._open_modal("shop")
   await capture("device%dx%d_shop" % [int(view.x),int(view.y)])
+  main._action("close","")
+  main.model.xp=510
+  main.model._update_level()
+  main._open_modal("growth")
+  await capture("device%dx%d_growth" % [int(view.x),int(view.y)])
   main._action("close","")
  main._apply_layout(Vector2(1280,720))
  main._start_new()
