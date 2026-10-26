@@ -57,18 +57,24 @@ func backdrop(c: CanvasItem, t: float, size: Vector2 = Vector2(1280,720)) -> voi
 		c.draw_rect(Rect2(size.x*0.5+i*40,0,40,size.y),Color(0.025,0.035,0.025,0.35+i*0.025))
 	c.draw_rect(Rect2(Vector2.ZERO,size),Color(0.025,0.035,0.025,0.20))
 
-func terrain(c: CanvasItem, bounds: Rect2, t: float) -> void:
+# The painted ground is projected onto the whole arena, not the screen, so it
+# scrolls with the following camera instead of sliding under a fixed backdrop.
+func terrain(c: CanvasItem, bounds: Rect2, t: float, field: Rect2 = Rect2()) -> void:
 	c.draw_rect(bounds,Color("263b39"))
+	var ground: Rect2 = field if field.size.x>0 else bounds
 	if background != null:
 		var source_width: float = background.get_width()
 		var center_y: float = background.get_height()*0.4506
-		var source_height: float = minf(source_width / (bounds.size.x/bounds.size.y),center_y*2.0)
+		var source_height: float = minf(source_width / (ground.size.x/ground.size.y),center_y*2.0)
 		var source_y: float = maxf(0,center_y-source_height*0.5)
-		c.draw_texture_rect_region(background,bounds,Rect2(0,source_y,source_width,source_height),Color(0.86,0.90,0.89))
-		sprite(c,"portal",Vector2(bounds.end.x-35,bounds.get_center().y+7),93,false,Color(0.85,0.8,0.85,0.9))
-		c.draw_rect(bounds,Color("4c625a"),false,1)
+		c.draw_texture_rect_region(background,ground,Rect2(0,source_y,source_width,source_height),Color(0.86,0.90,0.89))
+		sprite(c,"portal",Vector2(ground.end.x-35,ground.get_center().y+7),93,false,Color(0.85,0.8,0.85,0.9))
+		c.draw_rect(ground,Color("4c625a"),false,1)
 		return
 	# Deliberately low-frequency terrain keeps spell and enemy silhouettes legible.
+	# The fallback layout is authored in 1280x720 and mapped onto the arena.
+	c.draw_set_transform(ground.position,0,ground.size/Vector2(1280,720))
+	bounds = Rect2(Vector2.ZERO,Vector2(1280,720))
 	for row in range(14):
 		for column in range(34):
 			var x: float = bounds.position.x+column*37+(row%2)*13
@@ -100,6 +106,7 @@ func terrain(c: CanvasItem, bounds: Rect2, t: float) -> void:
 	sprite(c,"portal",Vector2(1225,341),100,false,Color(0.8,0.8,0.85,0.8))
 	c.draw_arc(Vector2(1215,350),34,0,TAU,40,Color(0.8,0.22,0.25,0.3+sin(t*2)*0.1),2,true)
 	c.draw_rect(bounds,Color("4c625a"),false,1)
+	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
 
 func castle(c: CanvasItem, at: Vector2, hp_ratio: float, t: float) -> void:
 	c.draw_set_transform(at,0,Vector2(1,0.35))

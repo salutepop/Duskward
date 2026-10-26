@@ -1107,7 +1107,7 @@ func _draw_title() -> void:
 	_label(_t("title.offline"),Vector2(56,681),18,MUTED)
 
 func _draw_arena() -> void:
-	art.terrain(self, Rect2(Vector2.ZERO,SIZE), time)
+	art.terrain(self, Rect2(Vector2.ZERO,SIZE), time, Rect2(_world(Vector2.ZERO), WORLD*PPM))
 	art.castle(self, _world(Model.CASTLE), model.base_hp / maxf(1,model.max_base_hp), time)
 	_draw_hunt_camp()
 	_draw_defenders()
@@ -1405,6 +1405,25 @@ func _draw_defenders() -> void:
 		if alive:
 			_bar(Rect2(p+Vector2(-21,-49),Vector2(42,8)),float(ally.hp),float(ally.max_hp),TEAL)
 
+# Fog of war is a map-only rule: the arena is small enough to read directly,
+# but the minimap only reports what the hero, castle and living allies can see.
+func vision_sources() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if model == null: return result
+	var v: Dictionary = model.data.get("vision",{})
+	result.append({"pos":model.pos,"radius":float(v.get("hero",12.0))})
+	result.append({"pos":Model.CASTLE,"radius":float(v.get("castle",11.0))})
+	for d in model.defenders:
+		if float(d.hp)>0: result.append({"pos":d.pos,"radius":float(v.get("defender",7.0))})
+	for a in model.allies:
+		if float(a.hp)>0: result.append({"pos":a.pos,"radius":float(v.get("ally",8.0))})
+	return result
+
+func is_visible_on_map(pos: Vector2) -> bool:
+	for source in vision_sources():
+		if pos.distance_to(source.pos) <= float(source.radius): return true
+	return false
+
 func _draw_minimap() -> void:
 	if model == null or model.enemies == null:
 		return
@@ -1417,8 +1436,18 @@ func _draw_minimap() -> void:
 	var view_size: Vector2 = SIZE/PPM
 	var view_origin: Vector2 = camera_pos-view_size*0.5
 	draw_rect(Rect2(to_map.call(view_origin),Vector2(view_size.x/WORLD.x*inner.size.x,view_size.y/WORLD.y*inner.size.y)), Color(0.75,0.68,0.4,0.55), false, 1)
+	var sight: Array[Dictionary] = vision_sources()
+	for source in sight:
+		var ring: float = float(source.radius)/WORLD.x*inner.size.x
+		draw_circle(to_map.call(source.pos), ring, Color(0.72,0.86,0.62,0.06))
 	draw_circle(to_map.call(Model.CASTLE), 3.0, TEAL)
 	for e in model.enemies:
+		var seen: bool = false
+		for source in sight:
+			if e.pos.distance_to(source.pos) <= float(source.radius):
+				seen = true
+				break
+		if not seen: continue
 		var col: Color = Color(0.95,0.45,0.3) if str(e.kind) in ["elite","boss"] else RED
 		draw_circle(to_map.call(e.pos), 2.0, col)
 	for ally in model.allies:

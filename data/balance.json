@@ -7,6 +7,12 @@
     "hp_internal": "milli_hp",
     "currency_internal": "milli_gold"
   },
+  "vision": {
+    "hero": 12.0,
+    "castle": 11.0,
+    "defender": 7.0,
+    "ally": 8.0
+  },
   "mvp": {
     "hero": "guardian",
     "wave_count": 15,
