@@ -152,7 +152,7 @@ func _load_copy() -> void:
 		HERO_BLURBS[id] = _t("hero."+id+".description")
 		SKILL_NAMES[id] = []
 		SKILL_TIPS[id] = []
-		for slot in ["Q","W","E","R"]:
+		for slot in ["Q","W","E","R","F"]:
 			SKILL_NAMES[id].append(_t("skill."+id+"."+slot+".name"))
 			SKILL_TIPS[id].append(_t("skill."+id+"."+slot+".short"))
 	for key in ["ad","sp","max_hp","armor","magic_resist","attack_speed_bonus","crit_chance","energy_regen","max_energy","cooldown_reduction","lifesteal","move_speed"]:
@@ -422,6 +422,8 @@ func _input(event: InputEvent) -> void:
 				_cast("E")
 			elif key == KEY_R or key == KEY_4:
 				_cast("R")
+			elif key == KEY_F or key == KEY_5:
+				_cast("F")
 			elif key == KEY_SPACE:
 				_potion()
 			elif key == KEY_B:
@@ -523,8 +525,8 @@ func _skill_at(p: Vector2) -> String:
 	return ""
 
 func skill_center(slot_or_index: Variant) -> Vector2:
-	var index: int = int(slot_or_index) if slot_or_index is int else ["Q","W","E","R"].find(str(slot_or_index))
-	index = clampi(index,0,3)
+	var index: int = int(slot_or_index) if slot_or_index is int else ["Q","W","E","R","F"].find(str(slot_or_index))
+	index = clampi(index,0,4)
 	return Vector2(1056+(index%2)*122,528+(index/2)*110)
 
 func _begin_skill_pointer(id: int, at: Vector2, slot: String) -> void:
@@ -860,7 +862,7 @@ func _draw() -> void:
 
 func control_painted_rects() -> Dictionary:
 	var result: Dictionary = {"stick":Rect2(joystick_center-Vector2(68,68),Vector2(136,136)),"potion":Rect2(877,595,86,104),"hud_hero":Rect2(24,22,340,140),"hud_castle":Rect2(424,22,432,100),"hud_boss":Rect2(424,130,432,54),"hud_gold":Rect2(890,22,158,42),"hud_shop":Rect2(1070,22,80,80),"hud_pause":Rect2(1166,22,90,80)}
-	for slot in ["Q","W","E","R"]: result[slot]=Rect2(skill_center(slot)-Vector2(50,50),Vector2(100,112))
+	for slot in ["Q","W","E","R","F"]: result[slot]=Rect2(skill_center(slot)-Vector2(50,50),Vector2(100,112))
 	return result
 
 func _occlusion_regions() -> Array[Dictionary]:
@@ -1472,8 +1474,8 @@ func _draw_controls() -> void:
 		if model.prep_left>0:
 			_label(_t("prep.boss_countdown" if model.phase=="FinalPreparation" else "prep.countdown",{"seconds":int(ceilf(model.prep_left))}),Vector2(584,584),20,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	_draw_hunt_return()
-	for i in range(4):
-		var slot: String = ["Q","W","E","R"][i]
+	for i in range(5):
+		var slot: String = ["Q","W","E","R","F"][i]
 		var center: Vector2 = skill_center(i)
 		_set_ui_paint(paint_controls[slot])
 		var ability: Dictionary = model.ability(slot)

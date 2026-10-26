@@ -32,7 +32,7 @@ var pos = START
 var facing = Vector2.RIGHT
 var inventory: Array = []
 var potions = 0
-var cooldowns: Dictionary = {"Q":0.0,"W":0.0,"E":0.0,"R":0.0}
+var cooldowns: Dictionary = {"Q":0.0,"W":0.0,"E":0.0,"R":0.0,"F":0.0}
 var respawn_left = 0.0
 var invulnerable_left = 0.0
 var elapsed = 0.0
@@ -124,7 +124,7 @@ func reset(new_hero: String, new_seed: int = 12345):
 	level = 1
 	inventory = []
 	potions = 0
-	cooldowns = {"Q":0.0,"W":0.0,"E":0.0,"R":0.0}
+	cooldowns = {"Q":0.0,"W":0.0,"E":0.0,"R":0.0,"F":0.0}
 	pos = START
 	facing = Vector2.RIGHT
 	shield = 0
@@ -253,7 +253,7 @@ func switch_hero(new_hero: String) -> Dictionary:
 	hp = saved.get("hp", stats.max_hp)
 	energy = saved.get("energy", stats.max_energy)
 	respawn_left = saved.get("respawn_left", 0.0)
-	cooldowns = saved.get("cooldowns", {"Q":0.0,"W":0.0,"E":0.0,"R":0.0})
+	cooldowns = saved.get("cooldowns", {"Q":0.0,"W":0.0,"E":0.0,"R":0.0,"F":0.0})
 	potion_cd = saved.get("potion_cd", 0.0)
 	potion_ticks = saved.get("potion_ticks", 0)
 	potion_tick_left = saved.get("potion_tick_left", 0.0)
@@ -373,7 +373,8 @@ func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: 
 	e.retreated = false
 	e.flash = 0.0
 	e.hidden = false
-	if kind in ["crawler","skirmisher"] and rng.randf() < 0.15:
+	e.stun_left = 0.0
+	if kind in ["crawler", "skirmisher"] and rng.randf() < 0.15:
 		e.hidden = true
 		e.reveal_distance = 4.0
 	enemies.append(e)
@@ -561,6 +562,20 @@ func _targets(center: Vector2, radius: float, cap: int) -> Array:
 		var db = center.distance_squared_to(b.pos)
 		return a.id < b.id if is_equal_approx(da,db) else da < db)
 	return result.slice(0,cap)
+
+func _damage_enemies_in_cone(origin: Vector2, direction: Vector2, radius: float, cap: int, damage: float, damage_type: String, source: String) -> Array:
+	var hits: Array = []
+	for e in enemies:
+		if e.hp <= 0: continue
+		var delta: Vector2 = e.pos - origin
+		if delta.length_squared() > pow(radius + float(e.radius), 2): continue
+		if delta.length_squared() < 0.0001: hits.append(e)
+		elif direction.dot(delta.normalized()) >= cos(deg_to_rad(75)): hits.append(e)
+	hits.sort_custom(func(a,b):
+		return a.id < b.id if is_equal_approx(origin.distance_squared_to(a.pos), origin.distance_squared_to(b.pos)) else origin.distance_squared_to(a.pos) < origin.distance_squared_to(b.pos))
+	hits = hits.slice(0,cap)
+	for e in hits: _damage_enemy(e,damage,damage_type,false,source)
+	return hits
 
 func _basic_attack():
 	var target = _nearest(pos,float(stats.attack_range))
@@ -820,6 +835,22 @@ func _execute_cast(c: Dictionary):
 			hits = _targets(pos,7,12)
 			if respawn_left <= 0: hp = minf(stats.max_hp,hp+150+stats.sp)
 			_effect("sunburst",pos,7,0.65)
+		"guardian.F":
+			var stun_targets = _targets(c.origin,2.0,8)
+			for enemy in stun_targets: _stun(enemy,1.5)
+			_damage_enemies_in_cone(c.origin, c.dir, 2.0, 8, damage, "physical", "guardian.F")
+			_effect("stun_blast",c.origin,2.0,0.5,c.dir)
+		"ranger.F":
+			var base_dir = c.dir if c.dir!=Vector2.ZERO else facing
+			for i in 3:
+				var angle = -15 + i*15
+				var rotated = base_dir.rotated(deg_to_rad(angle))
+				projectiles.append({"pos":c.origin,"previous":c.origin,"velocity":rotated*25.0,"hostile":false,"radius":0.15,"life":1.2,"damage":damage,"damage_type":"physical","basic":false,"hero":"ranger","source":"ranger.F"})
+			_effect("volley",c.origin,3.5,0.35,base_dir)
+		"arcanist.F":
+			var dot_zone = {"pos":c.origin,"follow":false,"left":0.5,"life":4.0,"count":8,"damage":float(a.extra.get("dot_damage_per_second",15)),"type":"magic","radius":float(a.extra.get("radius",2.5)),"cap":8,"slow":0.0,"source":"arcanist.F","dot":true}
+			pulse_zones.append(dot_zone)
+			_effect("void_field",c.origin,float(a.extra.get("radius",2.5)),0.6)
 	hits = hits.slice(0,int(a.target_cap))
 	for e in hits: _damage_enemy(e,damage,str(a.damage_type),false,hero_id+"."+c.slot)
 	_caster_passive(hits.size())
@@ -838,12 +869,30 @@ func _slow(e: Dictionary, fraction: float, duration: float, source: String = "")
 	e.slow_effects[group] = {"fraction":fraction,"left":maxf(old.left,duration)}
 	_refresh_slow(e)
 
+func _stun(e: Dictionary, duration: float):
+	if e.kind in ["boss", "weakness"]: return
+	if not e.has("stun_effects"): e.stun_effects = []
+	e.stun_effects.append(duration)
+	e.stun_left = maxf(e.stun_left, duration)
+	e.telegraph = 0
+	e.chase_left = 0
+
 func _refresh_slow(e: Dictionary):
 	e.slow = 0.0
 	e.slow_left = 0.0
 	for effect in e.get("slow_effects",{}).values():
 		e.slow = maxf(float(e.slow),float(effect.fraction))
 		e.slow_left = maxf(float(e.slow_left),float(effect.left))
+
+func _tick_stun(e: Dictionary, dt: float):
+	if not e.has("stun_effects"): return
+	e.stun_left = maxf(0,e.stun_left-dt)
+	var remaining: Array = []
+	for s in e.stun_effects:
+		var left = s-dt
+		if left>0: remaining.append(left)
+		else: _effect("stun",e.pos,0.6,0.18)
+	e.stun_effects = remaining
 
 func _tick_slow(e: Dictionary, dt: float):
 	if e.get("slow_effects",{}).is_empty():
@@ -865,12 +914,14 @@ func _step_zones(dt: float):
 			for e in _targets(z.pos,z.radius,z.cap): _slow(e,z.slow,dt*2,z.get("source","zone"))
 		if z.left <= 0.000001:
 			var hits = _targets(z.pos,z.radius,z.cap)
-			for e in hits:
-				_damage_enemy(e,z.damage,z.type,false,z.get("source","zone"))
-			_caster_passive(hits.size())
-			_effect("pulse",z.pos,z.radius,0.7)
-			z.count -= 1
-			z.left += 1
+			if z.get("dot",false):
+				for e in hits: _damage_enemy(e,z.damage*dt,z.type,false,z.get("source","zone"))
+			else:
+				for e in hits: _damage_enemy(e,z.damage,z.type,false,z.get("source","zone"))
+				_caster_passive(hits.size())
+				_effect("pulse",z.pos,z.radius,0.7)
+				z.count -= 1
+				z.left += 1
 		if z.count>0 and z.life>0.000001: remaining.append(z)
 	pulse_zones = remaining
 	remaining = []
@@ -894,6 +945,10 @@ func _step_enemies(dt: float):
 	for e in enemies:
 		if e.hp <= 0 or e.kind in ["boss","weakness"]: continue
 		e.flash = maxf(0,e.flash-dt)
+		_tick_stun(e,dt)
+		if e.stun_left > 0:
+			e.telegraph = 0
+			continue
 		e.attack_timer -= dt
 		_tick_slow(e,dt)
 		e.taunt_left = maxf(0,e.taunt_left-dt)
@@ -1407,8 +1462,8 @@ func _read_valid_checkpoint(path: String) -> Dictionary:
 		if not id is String or not items.has(id) or id=="healing_potion": return {}
 	var saved_stats = derived_stats(save.hero,int(save.level),save.inventory)
 	if save.hp<=0 or save.hp>saved_stats.max_hp or save.energy<0 or save.energy>saved_stats.max_energy: return {}
-	if not save.get("cooldowns") is Dictionary or save.cooldowns.size()!=4: return {}
-	for slot in ["Q","W","E","R"]:
+	if not save.get("cooldowns") is Dictionary or save.cooldowns.size()!=5: return {}
+	for slot in ["Q","W","E","R","F"]:
 		var cd = save.cooldowns.get(slot)
 		if not (cd is float or cd is int) or not is_finite(float(cd)) or cd<0 or cd>3600: return {}
 	if not _valid_checkpoint_metrics(save.get("metrics")): return {}
