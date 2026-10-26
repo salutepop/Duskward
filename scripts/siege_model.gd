@@ -4,6 +4,7 @@ extends RefCounted
 ## Coordinates use meters; callers advance at 30 Hz. RNG is explicitly seeded.
 const CASTLE = Vector2(8, 24)
 const START = Vector2(16, 24)
+const BOSS_SPAWN = Vector2(84, 24)
 const SAVE_PATH = "user://emberwatch_checkpoint.json"
 const BUILD = "0.3.0"
 const SAVE_SCHEMA = 4
@@ -18,6 +19,9 @@ var hero_id = "guardian"
 var phase = "Preparation"
 var wave = 0
 var completed_wave = 0
+# Last ordinary wave before the boss. Derived from the active wave table so the
+# campaign length cannot drift from the data again.
+var final_wave: int = 10
 var max_base_hp = 6000.0
 var base_hp = 6000.0
 var gold = 300
@@ -86,6 +90,10 @@ var content_hash = ""
 var defenders: Array = []
 var allies: Array = []
 var special_event: Dictionary = {}
+# Bonus arenas fire once each; re-triggering them from start_next_wave trapped
+# the campaign in an endless event loop after waves 3 and 7.
+var special_event_waves_done: Array = []
+var kill_arena_done: bool = false
 var wave_modifier: String = ""
 var hero_switch_cooldown: float = 0.0
 var inactive_heroes: Dictionary = {}
@@ -123,6 +131,7 @@ func reset(new_hero: String, new_seed: int = 12345):
 	phase = "Preparation"
 	wave = 0
 	completed_wave = 0
+	final_wave = _resolve_final_wave()
 	base_hp = max_base_hp
 	gold = int(data.rewards.starting_gold)
 	xp = 0
@@ -185,6 +194,8 @@ func reset(new_hero: String, new_seed: int = 12345):
 	_reset_defenders()
 	_reset_allies()
 	special_event = {}
+	special_event_waves_done = []
+	kill_arena_done = false
 	wave_modifier = ""
 	wave_reinforcement_timer = 0.0
 	wave_reinforcement_count = 0
@@ -283,6 +294,16 @@ func log_event(kind: String, detail: Dictionary = {}):
 	event_log.append(entry)
 	if event_log.size() > 2000: event_log.pop_front()
 
+func _resolve_final_wave() -> int:
+	if ruleset=="fast" and tempo.has("wave_counts") and not tempo.wave_counts.is_empty():
+		return tempo.wave_counts.size()
+	return data.waves.size()
+
+func _final_preparation_seconds() -> float:
+	if ruleset=="fast" and tempo.has("final_preparation_seconds"):
+		return float(tempo.final_preparation_seconds)
+	return float(data.phase_rules.final_preparation_seconds)
+
 func start_next_wave() -> bool:
 	if phase == "FinalPreparation":
 		save_checkpoint()
@@ -293,12 +314,10 @@ func start_next_wave() -> bool:
 	if phase != "Preparation": return false
 	save_checkpoint()
 	wave = completed_wave+1
-	if wave > 50: return false
+	if wave > final_wave: return false
 	phase = "Combat"
+	prep_left = 0
 	_prepare_hunt()
-	# Special event after wave 3 and 7
-	if completed_wave in [3,7] and not special_event.get("active",false):
-		_trigger_special_event()
 	var w = data.waves[clampi(wave-1,0,data.waves.size()-1)]
 	wave_modifier = str(w.get("modifier",""))
 	# Fallback: apply a random modifier every 3 waves after wave 10
@@ -408,7 +427,8 @@ func _spawn_position() -> Vector2:
 func spawn_enemy(kind: String, at: Vector2, reward: bool = true, random_stream: RandomNumberGenerator = null) -> Dictionary:
 	var e: Dictionary
 	if kind == "boss":
-		e = {"hp":18000.0,"damage":180.0,"interval":7.0,"speed":1.8,"armor":20.0,"magic_resist":20.0,"castle_multiplier":1.0,"cost":0}
+		var boss_data: Dictionary = data.boss
+		e = {"hp":float(boss_data.base_hp)*float(boss_data.get("hp_player_scale",1.0)),"damage":180.0,"interval":7.0,"speed":1.8,"armor":float(boss_data.get("armor",0.0)),"magic_resist":float(boss_data.get("magic_resist",0.0)),"castle_multiplier":1.0,"cost":0}
 	elif kind == "weakness":
 		e = {"hp":120.0,"damage":0.0,"interval":99.0,"speed":0.0,"armor":0.0,"magic_resist":0.0,"castle_multiplier":0.0,"cost":0}
 	elif kind == "elite":
@@ -501,7 +521,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 		prep_left -= dt
 		if prep_left <= 0:
 			phase = "Boss"
-			spawn_enemy("boss",Vector2(84,24),false)
+			spawn_enemy("boss",BOSS_SPAWN,false)
 			announce("Break the cannon core. Dodge striped ground attacks.")
 		return
 	if phase == "Combat" and not spawn_queue.is_empty():
@@ -521,7 +541,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 			spawn_was_capped = false
 	if phase == "Boss": _step_boss(dt)
 	# 2k kill arena
-	if phase == "Combat" and metrics.total_kills >= 2000 and not special_event.get("arena_active",false):
+	if phase == "Combat" and metrics.total_kills >= 2000 and not kill_arena_done:
 		_trigger_kill_arena()
 	if phase == "SpecialEvent": _step_special_event(dt)
 	_step_wave_reinforcements(dt)
@@ -597,13 +617,18 @@ func _clear_wave():
 	cancel_cast()
 	respawn_left = 0
 	pos = START
-	phase = "FinalPreparation" if wave == 10 else "Preparation"
-	prep_left = float(tempo.preparation_seconds) if ruleset=="fast" else 15.0
+	phase = "FinalPreparation" if wave >= final_wave else "Preparation"
+	prep_left = _final_preparation_seconds() if phase=="FinalPreparation" else (float(tempo.preparation_seconds) if ruleset=="fast" else 15.0)
 	base_hp = minf(max_base_hp,base_hp+max_base_hp*0.03)
 	metrics.waves.append({"wave":wave,"time":elapsed,"base_hp":base_hp,"level":level,"gold_earned":metrics.gold_earned})
 	announce("WAVE %d CLEAR  •  +%d gold  •  Forge your next upgrade" % [wave,reward_gold])
 	log_event("wave_clear",{"wave":wave,"gold":gold,"xp":xp,"base_hp":base_hp})
 	save_checkpoint()
+	# The bonus arena runs on top of the preparation timer, so the countdown is
+	# already armed and resumes the moment the arena closes.
+	if completed_wave in [3,7] and not special_event_waves_done.has(completed_wave):
+		special_event_waves_done.append(completed_wave)
+		_trigger_special_event()
 
 func _update_level():
 	var old = level
@@ -1006,6 +1031,8 @@ func _step_zones(dt: float):
 		var hits = _targets(t.pos,3,8)
 		if t.arm <= 0 and not hits.is_empty():
 			for e in hits:
+				# Flyers pass over ground traps.
+				if e.kind=="flyer": continue
 				_damage_enemy(e,t.damage,"physical",false,"ranger.W")
 				_slow(e,0.4,3,"ranger.W")
 			_effect("trap",t.pos,3,0.5)
@@ -1075,7 +1102,7 @@ func _step_enemies(dt: float):
 		if e.taunt_left>0 and e.kind!="siege" and respawn_left<=0:
 			target = pos
 			target_name = "hero"
-		if target_name=="base" and e.kind!="siege":
+		if target_name=="base" and e.kind not in ["siege","flyer"]:
 			var ally = _nearest_defender(e.pos,5.0)
 			if not ally.is_empty():
 				target = ally.pos
@@ -1253,7 +1280,8 @@ func _step_boss(dt: float):
 			boss_cooldowns.charge = 10
 			boss_pattern_data = {"pos":b.pos,"dir":(pos-b.pos).normalized(),"radius":3.0,"duration":0.8}
 		else:
-			var destination = Vector2(12,12)
+			# Hold the siege line east of the castle; the arena is 96x48 now.
+			var destination: Vector2 = CASTLE+Vector2(4,0)
 			b.pos = b.pos.move_toward(destination,float(b.speed)*(1-float(b.slow))*dt)
 
 func _enrage_multiplier() -> float:
@@ -1470,7 +1498,7 @@ func load_checkpoint() -> bool:
 	recalculate_stats()
 	hp = float(save.hp)
 	energy = float(save.energy)
-	prep_left = (float(tempo.preparation_seconds) if ruleset=="fast" else 15.0) if phase=="FinalPreparation" else 0
+	prep_left = _final_preparation_seconds() if phase=="FinalPreparation" else 0
 	announce("Previous checkpoint recovered. Prepare before the next battle." if recovered else "Checkpoint restored. Prepare before the next battle.")
 	return true
 
@@ -1517,9 +1545,9 @@ func _read_valid_checkpoint(path: String) -> Dictionary:
 		if not is_finite(float(save[key])): return {}
 	for key in ["seed","completed_wave","gold","xp","level","potions"]:
 		if float(save[key])!=floorf(float(save[key])): return {}
-	if save.completed_wave<0 or save.completed_wave>10: return {}
-	if save.phase=="FinalPreparation" and save.completed_wave!=10: return {}
-	if save.phase=="Preparation" and save.completed_wave==10: return {}
+	if save.completed_wave<0 or save.completed_wave>final_wave: return {}
+	if save.phase=="FinalPreparation" and save.completed_wave!=final_wave: return {}
+	if save.phase=="Preparation" and save.completed_wave>=final_wave: return {}
 	if save.base_hp<=0 or save.base_hp>max_base_hp: return {}
 	if save.gold<0 or save.gold>1000000000 or save.xp<0 or save.xp>1000000000: return {}
 	if save.level<1 or save.level>12 or save.potions<0 or save.potions>3 or save.elapsed<0: return {}
@@ -1740,6 +1768,7 @@ func _observe_pressure() -> void:
 	metrics.peak_nearby_8m = maxi(int(metrics.peak_nearby_8m),nearby)
 
 func _trigger_kill_arena() -> void:
+	kill_arena_done = true
 	phase = "SpecialEvent"
 	special_event = {"active":true, "arena_active":true, "type":"kill_arena", "timer":0.0, "duration":60.0}
 	announce("SPECIAL EVENT - 2000 Kills! 60s Elite Hunt Arena!")
@@ -1765,17 +1794,10 @@ func _trigger_special_event() -> void:
 
 func _step_special_event(dt: float) -> void:
 	if phase != "SpecialEvent": return
+	if special_event.is_empty(): return
 	special_event["timer"] += dt
 	if special_event["timer"] >= special_event["duration"] or enemies.size() == 0:
-		var bonus_gold: int = 200 + completed_wave * 50
-		var bonus_xp: int = 150 + completed_wave * 30
-		gold += bonus_gold
-		xp += bonus_xp
-		metrics.gold_earned += bonus_gold
-		announce("SPECIAL EVENT CLEAR  •  +%d gold, +%d xp" % [bonus_gold, bonus_xp])
-		log_event("special_event_end",{"wave":completed_wave,"gold":bonus_gold,"xp":bonus_xp})
-		phase = "Preparation"
-		special_event = {}
+		_end_special_event()
 		return
 	# Spawn more enemies over time
 	special_event["spawn_timer"] -= dt
@@ -1784,6 +1806,25 @@ func _step_special_event(dt: float) -> void:
 		var kinds = ["crawler", "crawler", "skirmisher", "shooter"]
 		spawn_enemy(kinds[spawn_rng.randi() % kinds.size()], _spawn_position(), false)
 		special_event["enemies_spawned"] += 1
+
+# Leaving an arena must restore a phase that actually advances, with its own
+# timer, or the campaign stalls in a preparation that never counts down.
+func _end_special_event() -> void:
+	var bonus_gold: int = 200 + completed_wave * 50
+	var bonus_xp: int = 150 + completed_wave * 30
+	gold += bonus_gold
+	xp += bonus_xp
+	metrics.gold_earned += bonus_gold
+	_update_level()
+	announce("SPECIAL EVENT CLEAR  •  +%d gold, +%d xp" % [bonus_gold, bonus_xp])
+	log_event("special_event_end",{"wave":completed_wave,"gold":bonus_gold,"xp":bonus_xp})
+	special_event = {}
+	if completed_wave >= final_wave:
+		phase = "FinalPreparation"
+		prep_left = _final_preparation_seconds()
+	else:
+		phase = "Preparation"
+		prep_left = float(tempo.preparation_seconds) if ruleset=="fast" else 15.0
 
 func _prepare_hunt() -> void:
 	hunt = {}

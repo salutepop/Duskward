@@ -29,7 +29,7 @@ if grep -Eq '(^|[[:space:]])(SCRIPT ERROR:|ERROR:)' "$TEST_ROOT/import.log"; the
   exit 1
 fi
 result=0
-for suite in hard_profile_catalog fast_profile_support hunt_opportunity_lifecycle hunt_opt_in spawn_schedule defender_boss_geometry model_smoke model_regression rng_streams checkpoint_validation checkpoint_resources presentation_clock_controls presentation_layout presentation_results presentation_redesign presentation_support presentation_occlusion qa_hunt_controller; do
+for suite in hard_profile_catalog fast_profile_support hunt_opportunity_lifecycle hunt_opt_in spawn_schedule campaign_roles defender_boss_geometry model_smoke model_regression rng_streams checkpoint_validation checkpoint_resources presentation_clock_controls presentation_layout presentation_results presentation_redesign presentation_support presentation_occlusion qa_hunt_controller; do
   printf '\n== %s ==\n' "$suite"
   if "$GODOT" --headless --path "$ROOT" --script "res://tests/$suite.gd" > "$TEST_ROOT/$suite.log" 2>&1; then
     status=0

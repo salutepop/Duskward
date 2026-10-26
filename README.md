@@ -6,7 +6,7 @@ A real offline, single-player hero siege game for Android, built in Godot 4.6.3 
 
 ## Play
 
-Defend the castle through ten waves, then defeat the Rampart Breaker. Move into range to attack automatically. Spend gold between waves on equipment; higher-tier equipment automatically consumes eligible components and charges only the remaining recipe cost. Six equipment slots and a separate three-potion reserve are available. The castle is the loss condition, not the hero: a fallen hero respawns while enemies continue attacking.
+Defend the castle through fifteen waves, then defeat the Rampart Breaker. Move into range to attack automatically. Spend gold between waves on equipment; higher-tier equipment automatically consumes eligible components and charges only the remaining recipe cost. Six equipment slots and a separate three-potion reserve are available. The castle is the loss condition, not the hero: a fallen hero respawns while enemies continue attacking.
 
 - Android: landscape. Left stick moves; quick taps on right buttons cast Q/W/E/R with target assistance; drag a skill button to aim manually or into the cancel zone to cancel. Tap the vial to drink a potion. Gold cores interrupt the boss's four-second cannon attack; striped red ground attacks must be dodged.
 - Desktop: WASD or arrows move; 1/2/3/4 cast all four skills. Q/E/R are alternate casts; W remains movement. Space drinks a potion. B opens equipment; Escape pauses/back; Enter starts the next wave in preparation.
@@ -17,11 +17,11 @@ The experimental 0.3.0 checkpoint format (schema 4) separates combat, lane and c
 
 ## Scope
 
-Implemented: three selectable heroes, twelve skills, all twenty-four catalog items with recipes/stats/unique effects, five ordinary enemy types, ten explicitly budgeted waves, destructible boss cores and three telegraphed boss patterns, reinforcement thresholds/enrage, leveling, death/respawn, healing, checkpoint save/restore, pause/restart, and win/loss.
+Implemented: three selectable heroes, fifteen skills, all twenty-eight catalog items with recipes/stats/unique effects, eight ordinary enemy types, fifteen explicitly budgeted waves, destructible boss cores and three telegraphed boss patterns, reinforcement thresholds/enrage, leveling, death/respawn, healing, checkpoint save/restore, pause/restart, and win/loss.
 
 Deliberate mobile/solo adaptations: fixed twin-hand touch controls and assisted aim rather than RTS mouse commands; one open arena rather than multiplayer lanes; unlimited first preparation rather than a thirty-second first-purchase countdown; a separate potion reserve instead of consuming an equipment slot. Two killable local castle defenders and finite optional hunts on waves 4/8 adapt the side-objective concept to solo play; the castle battle continues during a hunt. These are not multiplayer teammates or the supplied document's full expedition system. Multiplayer networking, counteroffensive expansion and online features are not included.
 
-`data/balance.json` keeps the supplied 24-item catalog unchanged and appends additional set-effect items. The active experimental `data/tempo_profile.json` separately changes wave composition, spawn pacing and rewards: stronger enemy roles arrive earlier, growth is faster, and later preparation is six seconds. Hero/item stats, individual enemy HP/damage scaling and attack warnings are unchanged. The historical fast-v1 profile is preserved separately. These changes are hypotheses under fresh validation, not proof that the game is difficult or balanced. Passing tests does not establish that every build is equally competitive or that every phone performs well. Balance and touch ergonomics require measured playtests. See `IMPLEMENTATION_COVERAGE.md` and the accompanying QA report for specific verified and unverified claims.
+`data/balance.json` keeps the supplied 24-item catalog unchanged and appends additional set-effect items. The active experimental `data/tempo_profile.json` separately changes wave composition, spawn pacing and rewards: all eight enemy roles are scheduled across fifteen waves, growth follows the catalog's twelve experience per cost, ordinary preparation is six seconds and the boss preparation is fifteen. Hero/item stats, individual enemy HP/damage scaling and attack warnings are unchanged. The historical fast-v1 profile is preserved separately. These changes are hypotheses under fresh validation, not proof that the game is difficult or balanced. Passing tests does not establish that every build is equally competitive or that every phone performs well. Balance and touch ergonomics require measured playtests. See `IMPLEMENTATION_COVERAGE.md` and the accompanying QA report for specific verified and unverified claims.
 
 ## Run from source
 
@@ -66,7 +66,7 @@ godot --headless --path . --export-debug Android /absolute/path/Duskward-debug.a
 - `data/ui_ko.json` / `scripts/ui_copy.gd`: Korean presentation catalog; stable simulation/save IDs are not translated.
 - `tests/`: runtime Godot tests. Effects and model state are observable for independent QA.
 
-The redesigned battlefield fills a 1280×640 logical region with a uniform world projection. World coordinates are meters in a 48×24 arena; simulation steps at 30 Hz. Small solo populations permit straightforward target ordering and separation; this implementation is not a promise of network lockstep or the design document's 150-active-enemy/co-op performance envelope.
+The redesigned battlefield fills the device with a uniform world projection over a 1280×720 design box that expands to the screen aspect. World coordinates are meters in a 96×48 arena tracked by a clamped following camera; simulation steps at 30 Hz. Small solo populations permit straightforward target ordering and separation; this implementation is not a promise of network lockstep or the design document's 150-active-enemy/co-op performance envelope.
 
 ## Credits and licenses
 

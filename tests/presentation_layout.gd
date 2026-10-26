@@ -50,6 +50,17 @@ func audit():
  main._action("item","healing_potion")
  main._action("buy","")
  await capture("shop_potion_sell")
+ main._action("close","")
+ # Real device canvases: 19.5:9 phone (1560x720) and 16:10 tablet (1280x800).
+ for view in [Vector2(1560,720),Vector2(1280,800)]:
+  main._apply_layout(view)
+  main._start_new()
+  await capture("device%dx%d_preparation" % [int(view.x),int(view.y)])
+  main._open_modal("shop")
+  await capture("device%dx%d_shop" % [int(view.x),int(view.y)])
+  main._action("close","")
+ main._apply_layout(Vector2(1280,720))
+ main._start_new()
  var scaled_targets=[]
  for dimensions in [Vector2(800,480),Vector2(1920,1080),Vector2(2400,1080),Vector2(1280,800)]:
   var uniform=minf(dimensions.x/main.SIZE.x,dimensions.y/main.SIZE.y)

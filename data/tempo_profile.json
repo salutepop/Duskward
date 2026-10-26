@@ -4,8 +4,9 @@
   "spawn_interval_seconds": 0.4,
   "initial_spawn_count": 3,
   "preparation_seconds": 6.0,
+  "final_preparation_seconds": 15.0,
   "kill_gold_per_cost": 6,
-  "kill_xp_per_cost": 15,
+  "kill_xp_per_cost": 12,
   "wave_reward_multiplier": 1.25,
   "defenders": {
     "enabled": true,
@@ -79,100 +80,132 @@
       "siege": 1
     },
     {
-      "crawler": 24,
+      "crawler": 22,
       "skirmisher": 4,
       "shooter": 4,
       "guard": 2,
-      "siege": 2
+      "siege": 2,
+      "flyer": 2
     },
     {
-      "crawler": 26,
+      "crawler": 24,
       "skirmisher": 5,
       "shooter": 4,
       "guard": 3,
-      "siege": 2
+      "siege": 2,
+      "flyer": 3
     },
     {
       "crawler": 26,
       "skirmisher": 5,
       "shooter": 6,
       "guard": 3,
-      "siege": 3
+      "siege": 3,
+      "flyer": 3
     },
     {
-      "crawler": 25,
+      "crawler": 24,
       "skirmisher": 8,
       "shooter": 6,
       "guard": 4,
-      "siege": 3
+      "siege": 3,
+      "healer": 2
     },
     {
-      "crawler": 25,
+      "crawler": 22,
       "skirmisher": 8,
-      "shooter": 8,
+      "shooter": 7,
       "guard": 4,
-      "siege": 4
+      "siege": 4,
+      "healer": 2,
+      "flyer": 3
     },
     {
-      "crawler": 26,
+      "crawler": 24,
       "skirmisher": 9,
       "shooter": 8,
       "guard": 5,
-      "siege": 4
+      "siege": 4,
+      "healer": 2,
+      "summoner": 1,
+      "flyer": 3
+    },
+    {
+      "crawler": 24,
+      "skirmisher": 8,
+      "shooter": 9,
+      "guard": 6,
+      "siege": 4,
+      "healer": 3,
+      "summoner": 2,
+      "flyer": 4
+    },
+    {
+      "crawler": 26,
+      "skirmisher": 8,
+      "shooter": 9,
+      "guard": 6,
+      "siege": 4,
+      "healer": 3,
+      "summoner": 2,
+      "flyer": 4
+    },
+    {
+      "crawler": 26,
+      "skirmisher": 8,
+      "shooter": 10,
+      "guard": 6,
+      "siege": 5,
+      "healer": 3,
+      "summoner": 2,
+      "flyer": 5
     },
     {
       "crawler": 28,
       "skirmisher": 8,
       "shooter": 10,
       "guard": 6,
-      "siege": 4
+      "siege": 5,
+      "healer": 3,
+      "summoner": 3,
+      "flyer": 5
+    },
+    {
+      "crawler": 28,
+      "skirmisher": 8,
+      "shooter": 11,
+      "guard": 7,
+      "siege": 5,
+      "healer": 3,
+      "summoner": 3,
+      "flyer": 5
     },
     {
       "crawler": 30,
-      "skirmisher": 8,
+      "skirmisher": 9,
       "shooter": 11,
-      "guard": 6,
-      "siege": 4
-    },
-    {
-      "crawler": 30,
-      "skirmisher": 8,
-      "shooter": 11,
-      "guard": 6,
-      "siege": 4
-    },
-    {
-      "crawler": 30,
-      "skirmisher": 8,
-      "shooter": 11,
-      "guard": 6,
-      "siege": 4
-    },
-    {
-      "crawler": 30,
-      "skirmisher": 8,
-      "shooter": 11,
-      "guard": 6,
-      "siege": 4
-    },
-    {
-      "crawler": 30,
-      "skirmisher": 8,
-      "shooter": 11,
-      "guard": 6,
-      "siege": 4
+      "guard": 7,
+      "siege": 5,
+      "healer": 4,
+      "summoner": 3,
+      "flyer": 6
     }
   ],
   "wave_budgets": [
     24,
     44,
     50,
-    64,
-    72,
-    84,
+    68,
+    79,
     93,
-    105,
-    112,
-    122
+    98,
+    114,
+    129,
+    144,
+    146,
+    158,
+    164,
+    171,
+    181
   ]
 }

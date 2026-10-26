@@ -9,7 +9,7 @@
   },
   "mvp": {
     "hero": "guardian",
-    "wave_count": 10,
+    "wave_count": 15,
     "items": [
       "iron_blade",
       "focus_stone",
@@ -1756,7 +1756,7 @@
     }
   ],
   "phase_rules": {
-    "post_wave10": "FinalPreparation",
+    "post_final_wave": "FinalPreparation",
     "final_preparation_seconds": 15,
     "boss_intro_seconds": 5,
     "save_allowed_phases": [

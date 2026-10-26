@@ -122,7 +122,10 @@ var sound_enabled: bool = true
 func _layout() -> void:
 	# The headless display server reports a square 1280x1280 window that has no
 	# physical counterpart; keep the design box so geometry audits stay exact.
-	SIZE = Vector2(1280,720) if DisplayServer.get_name()=="headless" else get_viewport_rect().size
+	_apply_layout(Vector2(1280,720) if DisplayServer.get_name()=="headless" else get_viewport_rect().size)
+
+func _apply_layout(view: Vector2) -> void:
+	SIZE = view
 	UI_DX = maxf(0,SIZE.x-1280.0)
 	UI_DY = maxf(0,SIZE.y-720.0)
 	joystick_center = Vector2(130,621)+_anchor("bottom")
@@ -1461,7 +1464,7 @@ func _draw_hud() -> void:
 	var right: Vector2 = _anchor("right")
 	_set_ui_paint(paint_controls.hud_castle)
 	_panel(_off(Rect2(424,22,432,100),mid),Color(0.065,0.08,0.065,0.90),LINE,5)
-	_label(_t("hud.initial_wave") if model.wave==0 and _is_preparation() else (_t("hud.boss") if model.phase in ["Boss","BossIntro","FinalPreparation"] else _t("hud.wave",{"wave":model.wave})),Vector2(640,49)+mid,23,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
+	_label(_t("hud.initial_wave") if model.wave==0 and _is_preparation() else (_t("hud.boss") if model.phase in ["Boss","BossIntro","FinalPreparation"] else _t("hud.wave",{"wave":model.wave,"total":model.final_wave})),Vector2(640,49)+mid,23,GOLD,HORIZONTAL_ALIGNMENT_CENTER)
 	_bar(_off(Rect2(442,63,396,27),mid),model.base_hp,model.max_base_hp,DANGER_FILL if base_flash>0 else CASTLE_FILL,"%s  %d / %d" % [_t("hud.castle_hp"),maxi(0,int(model.base_hp)),model.max_base_hp],19)
 	if model.phase=="Combat":
 		_label(_t("hud.enemy_count",{"count":lane_remaining_count()}),Vector2(640,113)+mid,18,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
@@ -1865,7 +1868,7 @@ func _draw_result() -> void:
 	_label(_t("result.victory_detail" if won else "result.defeat_detail"),Vector2(640,164),23,PAPER,HORIZONTAL_ALIGNMENT_CENTER)
 	draw_line(Vector2(280,187),Vector2(1000,187),LINE,1,true)
 	var labels: Array[String] = [_t("result.completed_waves"),_t("result.deaths"),_t("result.cannon_interrupts"),_t("result.time")]
-	var values: Array[String] = ["%d / 10" % summary.completed_waves,_result_number(summary.deaths)+"회",_result_number(summary.cannon_interrupts)+"회",summary.time_label]
+	var values: Array[String] = [_t("result.waves",{"count":summary.completed_waves,"total":model.final_wave}),_result_number(summary.deaths)+"회",_result_number(summary.cannon_interrupts)+"회",summary.time_label]
 	for i in range(4):
 		var x: float = 280+(i%2)*382
 		var y: float = 230+(i/2)*58

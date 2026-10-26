@@ -1,6 +1,6 @@
 extends RefCounted
 ## Original presentation primitives, plus validated original character atlases.
-const ENEMY_HEIGHTS = {"crawler":37.0,"skirmisher":49.0,"shooter":50.0,"guard":61.0,"siege":63.0,"boss":116.0,"weakness":40.0}
+const ENEMY_HEIGHTS = {"crawler":37.0,"skirmisher":49.0,"shooter":50.0,"guard":61.0,"siege":63.0,"boss":116.0,"weakness":40.0,"elite":50.0,"healer":46.0,"summoner":52.0,"flyer":44.0}
 var atlas: Texture2D
 var regions: Dictionary = {}
 var background: Texture2D
@@ -141,10 +141,50 @@ func enemy(c: CanvasItem, at: Vector2, kind: String, t: float, attacking: bool, 
 	c.draw_set_transform(at,0,Vector2(1,0.34))
 	c.draw_circle(Vector2.ZERO,height*0.29,Color(0.02,0.04,0.06,0.5*alpha))
 	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)
+	if kind=="elite":
+		if sprite(c,"crawler",at+Vector2(0,bob),height*1.35,false,Color(1,0.74,0.64,alpha)):
+			return
+	elif kind=="flyer":
+		_flyer(c,at,t,attacking,alpha)
+		return
+	elif kind=="healer":
+		_robed(c,at,t,Color("6fae7c"),Color("e7f5c8"),alpha,false)
+		return
+	elif kind=="summoner":
+		_robed(c,at,t,Color("8f74c8"),Color("e0c8ff"),alpha,true)
+		return
 	if sprite(c,kind,at+Vector2(0,bob),height,false,Color(1,0.75,0.7,alpha) if attacking else Color(1,1,1,alpha)):
 		return
 	c.draw_circle(at+Vector2(0,-10),14,Color("984b4f",alpha))
 	c.draw_line(at+Vector2(-14,-15),at+Vector2(14,-15),Color("e5a179",alpha),3,true)
+
+# Winged silhouette; the only role that crosses defender lines.
+func _flyer(c: CanvasItem, at: Vector2, t: float, attacking: bool, alpha: float) -> void:
+	var bob: float = sin(t*9+at.x*0.05)*4.0
+	var flap: float = sin(t*13)*0.5+0.5
+	var body: Vector2 = at+Vector2(0,-26+bob)
+	var wing: Color = Color("3a3350",alpha)
+	c.draw_colored_polygon(PackedVector2Array([body+Vector2(-4,0),body+Vector2(-16-flap*8,-12-flap*4),body+Vector2(-24-flap*4,2),body+Vector2(-6,7)]),wing)
+	c.draw_colored_polygon(PackedVector2Array([body+Vector2(4,0),body+Vector2(16+flap*8,-12-flap*4),body+Vector2(24+flap*4,2),body+Vector2(6,7)]),wing)
+	c.draw_circle(body,8,Color("5c4b76",alpha))
+	c.draw_circle(body+Vector2(-3,-2),1.8,Color(1,0.8,0.4,alpha))
+	c.draw_circle(body+Vector2(3,-2),1.8,Color(1,0.8,0.4,alpha))
+	if attacking: c.draw_arc(body,12,0,TAU,20,Color(1,0.4,0.3,alpha),2,true)
+
+# Support casters share one robed body; the sigil tells healer from summoner.
+func _robed(c: CanvasItem, at: Vector2, t: float, robe: Color, accent: Color, alpha: float, summon: bool) -> void:
+	var base: Vector2 = at+Vector2(0,sin(t*4+at.x*0.05)*1.5)
+	c.draw_colored_polygon(PackedVector2Array([base+Vector2(0,-44),base+Vector2(13,-20),base+Vector2(11,0),base+Vector2(-11,0),base+Vector2(-13,-20)]),Color(robe,alpha))
+	c.draw_circle(base+Vector2(0,-46),7,Color(robe.lightened(0.25),alpha))
+	c.draw_circle(base+Vector2(0,-46),4,Color("1b1a20",alpha))
+	var pulse: float = 0.5+sin(t*5)*0.5
+	var focus: Vector2 = base+Vector2(0,-62-pulse*3)
+	if summon:
+		c.draw_circle(focus,9+4*pulse,Color(accent,0.18*alpha))
+		c.draw_arc(focus,9,0,TAU,18,Color(accent,alpha),2,true)
+	else:
+		c.draw_line(focus+Vector2(-5,0),focus+Vector2(5,0),Color(accent,alpha),3,true)
+		c.draw_line(focus+Vector2(0,-5),focus+Vector2(0,5),Color(accent,alpha),3,true)
 
 func _arrow(c: CanvasItem, start: Vector2, end: Vector2, color: Color, width: float=3.0) -> void:
 	var d: Vector2 = (end-start).normalized()
