@@ -40,6 +40,8 @@ var prep_left = 0.0
 var boss_pattern = ""
 var boss_pattern_left = 0.0
 var boss_elapsed = 0.0
+var boss_phase = 1
+var mini_boss_spawned = false
 var notice = "Prepare your loadout, then begin the siege."
 var notice_left = 8.0
 var enemies: Array = []
@@ -163,6 +165,8 @@ func reset(new_hero: String, new_seed: int = 12345):
 	boss_pattern = ""
 	boss_pattern_left = 0
 	boss_elapsed = 0
+	boss_phase = 1
+	mini_boss_spawned = false
 	boss_cooldowns = {"cannon":5.0,"smash":3.0,"debris":9.0}
 	boss_pattern_data = {}
 	boss_thresholds = []
@@ -188,17 +192,30 @@ func recalculate_stats():
 		var group = item.get("unique_group", "none")
 		if group != "none":
 			set_counts[group] = int(set_counts.get(group, 0)) + 1
-	# Apply set bonuses
+	# 2-piece and 4-piece set bonuses
 	if set_counts.get("lifesteal_highest", 0) >= 2:
 		_active_set_effects["lifesteal_highest"] = true
 		if not stats.has("lifesteal"): stats.lifesteal = 0
 		stats.lifesteal = float(stats.lifesteal) + 0.15
-		announce("SET EFFECT: Vampire's Pact +15% Lifesteal")
-	if set_counts.get("fortress_aura_highest", 0) >= 2:
-		_active_set_effects["fortress_aura_highest"] = true
+	if set_counts.get("berserker_rage", 0) >= 2:
+		_active_set_effects["berserker_rage"] = true
+		if not stats.has("ad"): stats.ad = 0
+		stats.ad = float(stats.ad) * 1.2
+	if set_counts.get("berserker_rage", 0) >= 4:
+		_active_set_effects["berserker_rage_4"] = true
+		# 4-piece: kills reset Q cooldown (applied in _on_kill)
+	if set_counts.get("arcane_surge", 0) >= 2:
+		_active_set_effects["arcane_surge"] = true
+		if not stats.has("sp"): stats.sp = 0
+		stats.sp = float(stats.sp) * 1.15
+	if set_counts.get("guardian_aegis", 0) >= 2:
+		_active_set_effects["guardian_aegis"] = true
 		if not stats.has("damage_reduction"): stats.damage_reduction = 0
 		stats.damage_reduction = float(stats.damage_reduction) + 0.12
-		announce("SET EFFECT: Fortress Aura +12% Damage Reduction")
+	if set_counts.get("sanctuary_ward", 0) >= 2:
+		_active_set_effects["sanctuary_ward"] = true
+		if not stats.has("max_hp"): stats.max_hp = 0
+		stats.max_hp = int(float(stats.max_hp) * 1.2)
 	hp = minf(hp, stats.max_hp)
 	energy = minf(energy, stats.max_energy)
 
@@ -678,6 +695,9 @@ func _resolve_deaths():
 			metrics.total_kills += 1
 			metrics.wave_kills += 1
 			_update_level()
+			# Berserker Rage 4-piece: kills reset Q cooldown
+			if _active_set_effects.get("berserker_rage_4", false):
+				cooldowns["Q"] = 0.0
 			# 아이템 드롭 (레벨/웨이브 제한 있음)
 			var drop_chance: float = 0.12
 			if rng.randf() < drop_chance:
@@ -1032,7 +1052,31 @@ func _step_boss(dt: float):
 	if b.is_empty(): return
 	b.flash = maxf(0,b.flash-dt)
 	_tick_slow(b,dt)
-	for key in boss_cooldowns: boss_cooldowns[key] = maxf(0,boss_cooldowns[key]-dt)
+	# Boss phase transitions
+	var prev_phase: int = boss_phase
+	if b.hp <= b.max_hp*0.3:
+		boss_phase = 3
+	elif b.hp <= b.max_hp*0.6:
+		boss_phase = 2
+	else:
+		boss_phase = 1
+	if boss_phase > prev_phase:
+		if boss_phase == 2:
+			announce("BOSS PHASE 2  •  The breaker grows desperate!")
+			boss_add_queue += 1
+			_effect("phase",b.pos,5,0.6)
+		elif boss_phase == 3:
+			announce("BOSS PHASE 3  •  Final stand!")
+			spawn_enemy("elite",clamp_position(b.pos+Vector2(-4,0)),false)
+			spawn_enemy("elite",clamp_position(b.pos+Vector2(4,0)),false)
+			boss_add_queue += 1
+			_effect("phase",b.pos,6,0.8)
+	# Phase-based cooldown speed
+	var cd_mult: float = 1.0
+	if boss_phase == 2: cd_mult = 0.75
+	elif boss_phase == 3: cd_mult = 0.55
+	for key in boss_cooldowns: boss_cooldowns[key] = maxf(0,boss_cooldowns[key]-dt*cd_mult)
+	# Mini-boss spawns at phase thresholds
 	for threshold in [0.6,0.3]:
 		if b.hp<=b.max_hp*threshold and not boss_thresholds.has(threshold):
 			boss_thresholds.append(threshold)
@@ -1043,10 +1087,6 @@ func _step_boss(dt: float):
 		boss_add_timer = 3
 		for i in 4: spawn_enemy("crawler",clamp_position(b.pos+Vector2(3,i*1.5-2.25)),false)
 		announce("The breaker calls reinforcements!")
-	# Boss phase 2: spawn elite at 30% HP
-	if b.hp <= b.max_hp*0.3 and not boss_thresholds.has(0.1):
-		boss_thresholds.append(0.1)
-		spawn_enemy("elite",clamp_position(b.pos+Vector2(-3,0)),false)
 	if boss_pattern!="":
 		boss_pattern_left -= dt
 		if boss_pattern=="cannon" and not _has_kind("weakness"):
@@ -1065,7 +1105,7 @@ func _step_boss(dt: float):
 		spawn_enemy("weakness",clamp_position(b.pos+Vector2(-2,0)),false)
 		boss_pattern_data = {"pos":CASTLE,"dir":Vector2.LEFT,"radius":2.0,"duration":4.0}
 		announce("CANNON LOCK  •  Break the gold core in 4 seconds!")
-	elif boss_cooldowns.smash<=0 and respawn_left<=0 and b.pos.distance_to(pos)<10:
+	elif boss_cooldowns.smash<=0 and respawn_left<=0 and b.pos.distance_to(pos)<12:
 		boss_pattern = "smash"
 		boss_pattern_left = 1.2
 		boss_cooldowns.smash = 7
@@ -1080,8 +1120,15 @@ func _step_boss(dt: float):
 		for offset in [Vector2.ZERO,Vector2(4,3),Vector2(-4,-3)]:
 			hazards.append({"pos":clamp_position(pos+offset),"radius":2.2,"warning":1.0,"life":5.0,"damage":35.0*_enrage_multiplier(),"kind":"debris"})
 	else:
-		var destination = Vector2(12,12)
-		b.pos = b.pos.move_toward(destination,float(b.speed)*(1-float(b.slow))*dt)
+		# Phase 3 adds charge attack when close enough
+		if boss_phase >= 3 and boss_cooldowns.get("charge",0)<=0 and b.pos.distance_to(pos)<15:
+			boss_pattern = "charge"
+			boss_pattern_left = 0.8
+			boss_cooldowns.charge = 10
+			boss_pattern_data = {"pos":b.pos,"dir":(pos-b.pos).normalized(),"radius":3.0,"duration":0.8}
+		else:
+			var destination = Vector2(12,12)
+			b.pos = b.pos.move_toward(destination,float(b.speed)*(1-float(b.slow))*dt)
 
 func _enrage_multiplier() -> float:
 	return 1.0+minf(0.6,maxf(0,floorf((boss_elapsed-180)/20)+1)*0.15) if boss_elapsed>=180 else 1.0
@@ -1104,6 +1151,11 @@ func _resolve_boss_pattern(b: Dictionary):
 			if ally.hp>0 and ally_delta.length()<=7.6 and (ally_delta.length()<=0.6 or ally_delta.normalized().dot(boss_pattern_data.dir)>=0.5):
 				_damage_defender(ally,180*_enrage_multiplier())
 		_effect("smash",boss_pattern_data.pos,7,0.45,boss_pattern_data.dir)
+	elif pattern=="charge":
+		var delta: Vector2 = pos-boss_pattern_data.pos
+		if delta.length()<=3.5 and (delta.length()<=0.6 or delta.normalized().dot(boss_pattern_data.dir)>=0.5):
+			damage_hero(200*_enrage_multiplier(),"physical","boss_charge")
+		_effect("charge",boss_pattern_data.pos+boss_pattern_data.dir*4,3,0.5,boss_pattern_data.dir)
 	boss_pattern = ""
 	boss_pattern_left = 0
 	log_event("boss_pattern",{"pattern":pattern,"base_hp":base_hp})

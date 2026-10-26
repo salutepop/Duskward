@@ -23,7 +23,7 @@
   "heroes": [
     {
       "id": "guardian",
-      "name_ko": "\uc131\ubcbd \uc218\ud638\uc790",
+      "name_ko": "성벽 수호자",
       "base": {
         "max_hp": 900,
         "ad": 40,
@@ -48,7 +48,7 @@
     },
     {
       "id": "ranger",
-      "name_ko": "\uad00\ud1b5 \uc0ac\uc218",
+      "name_ko": "관통 사수",
       "base": {
         "max_hp": 650,
         "ad": 32,
@@ -75,7 +75,7 @@
     },
     {
       "id": "arcanist",
-      "name_ko": "\uc870\uc728 \uc220\uc0ac",
+      "name_ko": "조율 술사",
       "base": {
         "max_hp": 620,
         "ad": 24,
@@ -859,7 +859,7 @@
   "items": [
     {
       "id": "iron_blade",
-      "name_ko": "\ucca0\uc81c \ub0a0",
+      "name_ko": "철제 날",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -876,7 +876,7 @@
     },
     {
       "id": "focus_stone",
-      "name_ko": "\ucd08\uc810\uc11d",
+      "name_ko": "초점석",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -893,7 +893,7 @@
     },
     {
       "id": "armor_plate",
-      "name_ko": "\ubc29\ud638\ud310",
+      "name_ko": "방호판",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -910,7 +910,7 @@
     },
     {
       "id": "spring_gear",
-      "name_ko": "\uac00\uc18d \ud1b1\ub2c8",
+      "name_ko": "가속 톱니",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -927,7 +927,7 @@
     },
     {
       "id": "ward_cloth",
-      "name_ko": "\ub0b4\uc131 \ucc9c",
+      "name_ko": "내성 천",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -944,7 +944,7 @@
     },
     {
       "id": "keen_lens",
-      "name_ko": "\uc608\ub9ac\ud55c \ub80c\uc988",
+      "name_ko": "예리한 렌즈",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -961,7 +961,7 @@
     },
     {
       "id": "energy_cell",
-      "name_ko": "\uc5d0\ub108\uc9c0 \uc140",
+      "name_ko": "에너지 셀",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -978,7 +978,7 @@
     },
     {
       "id": "guard_seal",
-      "name_ko": "\uc218\ud638 \uc778\uc7a5",
+      "name_ko": "수호 인장",
       "tier": 1,
       "total_price": 200,
       "craft_fee": 200,
@@ -995,7 +995,7 @@
     },
     {
       "id": "storm_blade",
-      "name_ko": "\ud3ed\ud48d \uac80",
+      "name_ko": "폭풍 검",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1007,7 +1007,7 @@
         "attack_speed_bonus": 0.1
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "berserker_rage",
       "unlock_after_wave": 2,
       "sell_price": 360,
       "max_per_slot": 1,
@@ -1015,7 +1015,7 @@
     },
     {
       "id": "guard_armor",
-      "name_ko": "\uc218\ud638 \uac11\uc8fc",
+      "name_ko": "수호 갑주",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1027,7 +1027,7 @@
         "armor": 15
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "guardian_aegis",
       "unlock_after_wave": 2,
       "sell_price": 360,
       "max_per_slot": 1,
@@ -1035,7 +1035,7 @@
     },
     {
       "id": "focuser",
-      "name_ko": "\uc9d1\uc911 \uc7a5\uce58",
+      "name_ko": "집중 장치",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1047,7 +1047,7 @@
         "cooldown_reduction": 0.1
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "arcane_surge",
       "unlock_after_wave": 2,
       "sell_price": 360,
       "max_per_slot": 1,
@@ -1055,7 +1055,7 @@
     },
     {
       "id": "swift_bow",
-      "name_ko": "\uc18d\uc0ac \ud65c",
+      "name_ko": "속사 활",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1076,7 +1076,7 @@
     },
     {
       "id": "crit_scope",
-      "name_ko": "\uce58\uba85 \uc870\uc900\uacbd",
+      "name_ko": "치명 조준경",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1097,7 +1097,7 @@
     },
     {
       "id": "ward_mantle",
-      "name_ko": "\ubc29\ud638 \ub9dd\ud1a0",
+      "name_ko": "방호 망토",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1110,7 +1110,7 @@
         "magic_resist": 25
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "sanctuary_ward",
       "unlock_after_wave": 2,
       "sell_price": 360,
       "max_per_slot": 1,
@@ -1118,7 +1118,7 @@
     },
     {
       "id": "reservoir",
-      "name_ko": "\ube44\ucd95 \uc7a5\uce58",
+      "name_ko": "비축 장치",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1140,7 +1140,7 @@
     },
     {
       "id": "blood_edge",
-      "name_ko": "\ud761\uc218 \ub0a0",
+      "name_ko": "흡수 날",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1163,7 +1163,7 @@
     },
     {
       "id": "iron_ring",
-      "name_ko": "\ucca0\ubcbd \uace0\ub9ac",
+      "name_ko": "철벽 고리",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 200,
@@ -1184,7 +1184,7 @@
     },
     {
       "id": "tempest_glaive",
-      "name_ko": "\ud3ed\ud48d \ucc3d",
+      "name_ko": "폭풍 창",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1197,7 +1197,7 @@
         "attack_speed_bonus": 0.45
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "berserker_rage",
       "unlock_after_wave": 5,
       "sell_price": 840,
       "max_per_slot": 1,
@@ -1205,7 +1205,7 @@
     },
     {
       "id": "fortress",
-      "name_ko": "\uc131\ubcbd \uc2ec\uc7a5",
+      "name_ko": "성벽 심장",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1224,7 +1224,7 @@
         "affects_castle": false,
         "cooldown_seconds": 0
       },
-      "unique_group": "fortress_aura_highest",
+      "unique_group": "guardian_aegis",
       "unlock_after_wave": 5,
       "sell_price": 840,
       "max_per_slot": 1,
@@ -1232,7 +1232,7 @@
     },
     {
       "id": "star_core",
-      "name_ko": "\uc131\uc6b4 \ud575",
+      "name_ko": "성운 핵",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1247,7 +1247,7 @@
         "max_energy": 20
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "arcane_surge",
       "unlock_after_wave": 5,
       "sell_price": 840,
       "max_per_slot": 1,
@@ -1255,7 +1255,7 @@
     },
     {
       "id": "falcon_eye",
-      "name_ko": "\ub9e4\uc758 \ub208",
+      "name_ko": "매의 눈",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1277,7 +1277,7 @@
     },
     {
       "id": "sanctuary",
-      "name_ko": "\uc548\uc2dd \ubc29\ubcbd",
+      "name_ko": "안식 방벽",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1298,7 +1298,7 @@
         "cooldown_seconds": 30,
         "cooldown_persists_through_death": true
       },
-      "unique_group": "sanctuary_shield",
+      "unique_group": "sanctuary_ward",
       "unlock_after_wave": 5,
       "sell_price": 840,
       "max_per_slot": 1,
@@ -1306,7 +1306,7 @@
     },
     {
       "id": "sanguine",
-      "name_ko": "\uc801\uc0c9 \uc11c\uc57d",
+      "name_ko": "적색 서약",
       "tier": 3,
       "total_price": 1400,
       "craft_fee": 200,
@@ -1331,7 +1331,7 @@
     },
     {
       "id": "healing_potion",
-      "name_ko": "\ud68c\ubcf5 \uc57d",
+      "name_ko": "회복 약",
       "tier": 0,
       "total_price": 150,
       "craft_fee": 150,
@@ -1343,7 +1343,7 @@
         "duration_seconds": 3,
         "cooldown_seconds": 30
       },
-      "unique_group": "healing_potion_cooldown",
+      "unique_group": "none",
       "unlock_after_wave": 0,
       "sell_price": 90,
       "max_per_slot": 3,
@@ -1351,7 +1351,7 @@
     },
     {
       "id": "war_hammer",
-      "name_ko": "\uc804\uc7c1\ub9dd\uce58",
+      "name_ko": "전쟁망치",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 250,
@@ -1364,7 +1364,7 @@
         "crit_chance": 0.15
       },
       "passive": null,
-      "unique_group": "none",
+      "unique_group": "berserker_rage",
       "unlock_after_wave": 2,
       "sell_price": 360,
       "max_per_slot": 1,
@@ -1372,7 +1372,7 @@
     },
     {
       "id": "swift_boots",
-      "name_ko": "\uc2e0\uc18d\uc758 \uc7a5\ud654",
+      "name_ko": "신속의 장화",
       "tier": 1,
       "total_price": 250,
       "craft_fee": 250,
@@ -1393,7 +1393,7 @@
     },
     {
       "id": "crystal_orb",
-      "name_ko": "\uc218\uc815 \uad6c\uc2ac",
+      "name_ko": "수정 구슬",
       "tier": 2,
       "total_price": 550,
       "craft_fee": 250,
@@ -1409,7 +1409,7 @@
         "type": "energy_regen",
         "fraction": 0.2
       },
-      "unique_group": "none",
+      "unique_group": "arcane_surge",
       "unlock_after_wave": 2,
       "sell_price": 330,
       "max_per_slot": 1,
@@ -1417,7 +1417,7 @@
     },
     {
       "id": "vampire_fang",
-      "name_ko": "\ud761\ud608 \uc1a1\uacf3\ub2c8",
+      "name_ko": "흡혈 송곳니",
       "tier": 2,
       "total_price": 600,
       "craft_fee": 280,
