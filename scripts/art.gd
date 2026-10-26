@@ -124,7 +124,8 @@ func castle(c: CanvasItem, at: Vector2, hp_ratio: float, t: float) -> void:
 			c.draw_circle(p,5,Color("f1b454"))
 
 func hero(c: CanvasItem, at: Vector2, id: String, facing: Vector2, t: float, scale: float = 1.0, moving: bool = false, opacity: float = 1.0) -> void:
-	var bob: float = sin(t*13)*2 if moving else sin(t*2.2)*0.6
+	# A fast walk bob reads as ghosting once the canvas is upscaled on a phone.
+	var bob: float = sin(t*2.2)*0.6
 	c.draw_set_transform(at,0,Vector2(1,0.32))
 	c.draw_circle(Vector2.ZERO,19*scale,Color(0.02,0.05,0.07,0.55*opacity))
 	c.draw_set_transform(Vector2.ZERO,0,Vector2.ONE)

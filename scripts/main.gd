@@ -888,6 +888,7 @@ func _draw() -> void:
 		hit_offset = Vector2.ZERO
 	else:
 		_draw_arena()
+		_draw_fog()
 		_draw_hud()
 		_draw_controls()
 		_draw_status_strip()
@@ -1136,6 +1137,7 @@ func _draw_arena() -> void:
 	elif model.boss_pattern_left>0 and model.boss_pattern=="cannon":
 		_draw_world_disk(Vector2(4,12),2.0,Color(1,0.2,0.1,0.12),RED,3)
 	for e in model.enemies:
+		if str(e.kind)!="boss" and not is_visible_on_map(e.pos): continue
 		var p: Vector2 = _world(e.pos)
 		var warning: float = float(e.get("telegraph", 0))
 		if warning > 0:
@@ -1155,6 +1157,7 @@ func _draw_arena() -> void:
 		_draw_effect(effect)
 	_draw_aim_preview()
 	for e in model.enemies:
+		if str(e.kind)!="boss" and not is_visible_on_map(e.pos): continue
 		var p: Vector2 = _world(e.pos)
 		if e.get("hidden",false):
 			art.enemy(self,p,str(e.kind),time,false,0.3)
@@ -1419,6 +1422,44 @@ func vision_sources() -> Array[Dictionary]:
 		if float(a.hp)>0: result.append({"pos":a.pos,"radius":float(v.get("ally",8.0))})
 	return result
 
+func _unworld(screen: Vector2) -> Vector2:
+	return camera_pos + (screen - SIZE*0.5) / PPM
+
+# Coarse light grid: one rect per cell is cheap enough for a 60 Hz mobile frame
+# and keeps unseen ground dark instead of drawing a per-pixel mask.
+func _draw_fog() -> void:
+	if model == null or modal != "": return
+	var sources: Array[Dictionary] = vision_sources()
+	if sources.is_empty(): return
+	var cell: float = 40.0
+	var cols: int = int(ceil(SIZE.x/cell))
+	var rows: int = int(ceil(SIZE.y/cell))
+	# Corner samples shared between neighbouring quads give a smooth gradient;
+	# per-cell alpha alone shows hard steps at this canvas scale.
+	var grid: Array = []
+	for row in range(rows+1):
+		var line: Array = []
+		for col in range(cols+1):
+			var world: Vector2 = _unworld(Vector2(col*cell,row*cell))
+			var best: float = INF
+			for source in sources:
+				best = minf(best, world.distance_to(source.pos)-float(source.radius))
+			line.append(clampf(best/6.0,0.0,1.0)*0.88)
+		grid.append(line)
+	var shade: Color = Color(0.01,0.015,0.02,1.0)
+	for row in range(rows):
+		for col in range(cols):
+			var a00: float = float(grid[row][col])
+			var a10: float = float(grid[row][col+1])
+			var a01: float = float(grid[row+1][col])
+			var a11: float = float(grid[row+1][col+1])
+			if maxf(maxf(a00,a10),maxf(a01,a11)) <= 0.02: continue
+			var x: float = col*cell
+			var y: float = row*cell
+			draw_polygon(
+				PackedVector2Array([Vector2(x,y),Vector2(x+cell,y),Vector2(x+cell,y+cell),Vector2(x,y+cell)]),
+				PackedColorArray([Color(shade,a00),Color(shade,a10),Color(shade,a11),Color(shade,a01)]))
+
 func is_visible_on_map(pos: Vector2) -> bool:
 	for source in vision_sources():
 		if pos.distance_to(source.pos) <= float(source.radius): return true
@@ -1427,20 +1468,25 @@ func is_visible_on_map(pos: Vector2) -> bool:
 func _draw_minimap() -> void:
 	if model == null or model.enemies == null:
 		return
-	var mm_rect = Rect2(20, 400, 160, 80)
-	_panel(mm_rect, Color(0.06,0.08,0.06,0.85), LINE, 3)
+	# Sized to the arena's 2:1 aspect and pushed to the physical bottom edge, so the
+	# map stays legible on a 16:10 tablet as well as the phone.
+	var mm_rect: Rect2 = Rect2(Vector2(20,400)+_anchor("bottom"), Vector2(200,100))
+	_panel(mm_rect, Color(0.05,0.07,0.05,0.92), LINE, 3)
 	var inner: Rect2 = Rect2(mm_rect.position + Vector2(5,5), mm_rect.size - Vector2(10,10))
-	draw_rect(inner, Color(0.15,0.2,0.15,0.3), false, 1)
+	# Unexplored ground is a dim wash; vision discs lift it so the seen area reads
+	# at a glance instead of being an invisible 6%-alpha overlay.
+	draw_rect(inner, Color(0.10,0.13,0.09,1.0))
 	var to_map = func(p: Vector2) -> Vector2:
 		return inner.position + Vector2(p.x/WORLD.x*inner.size.x, p.y/WORLD.y*inner.size.y)
-	var view_size: Vector2 = SIZE/PPM
-	var view_origin: Vector2 = camera_pos-view_size*0.5
-	draw_rect(Rect2(to_map.call(view_origin),Vector2(view_size.x/WORLD.x*inner.size.x,view_size.y/WORLD.y*inner.size.y)), Color(0.75,0.68,0.4,0.55), false, 1)
 	var sight: Array[Dictionary] = vision_sources()
 	for source in sight:
 		var ring: float = float(source.radius)/WORLD.x*inner.size.x
-		draw_circle(to_map.call(source.pos), ring, Color(0.72,0.86,0.62,0.06))
-	draw_circle(to_map.call(Model.CASTLE), 3.0, TEAL)
+		draw_circle(to_map.call(source.pos), ring, Color(0.45,0.62,0.34,0.55))
+	draw_rect(inner, Color(0.55,0.62,0.44,0.5), false, 1)
+	var view_size: Vector2 = SIZE/PPM
+	var view_origin: Vector2 = camera_pos-view_size*0.5
+	draw_rect(Rect2(to_map.call(view_origin),Vector2(view_size.x/WORLD.x*inner.size.x,view_size.y/WORLD.y*inner.size.y)), Color(0.95,0.88,0.6,0.8), false, 1)
+	draw_circle(to_map.call(Model.CASTLE), 4.0, TEAL)
 	for e in model.enemies:
 		var seen: bool = false
 		for source in sight:
@@ -1449,10 +1495,10 @@ func _draw_minimap() -> void:
 				break
 		if not seen: continue
 		var col: Color = Color(0.95,0.45,0.3) if str(e.kind) in ["elite","boss"] else RED
-		draw_circle(to_map.call(e.pos), 2.0, col)
+		draw_circle(to_map.call(e.pos), 2.2, col)
 	for ally in model.allies:
-		draw_circle(to_map.call(ally.pos), 2.5, TEAL)
-	draw_circle(to_map.call(model.pos), 3.0, GOLD)
+		draw_circle(to_map.call(ally.pos), 2.6, TEAL)
+	draw_circle(to_map.call(model.pos), 3.4, GOLD)
 func _notice_text(notice: String) -> String:
 	var key: String = copy.notice_key(notice)
 	if key!="": return _t(key,{"seconds":_cooldown_text(model.boss_pattern_left)})
