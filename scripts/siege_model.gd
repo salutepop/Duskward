@@ -86,11 +86,16 @@ var content_hash = ""
 var defenders: Array = []
 var allies: Array = []
 var special_event: Dictionary = {}
+var wave_modifier: String = ""
 var hero_switch_cooldown: float = 0.0
 var inactive_heroes: Dictionary = {}
 var enhanced_items: Dictionary = {}
 var _active_set_effects: Dictionary = {}
 var hunt: Dictionary = {}
+var wave_reinforcement_timer: float = 0.0
+var wave_reinforcement_count: int = 0
+var endless_active: bool = false
+var endless_best_wave: int = 0
 var _combat_stats = preload("res://scripts/models/combat_stats.gd")
 var rng = RandomNumberGenerator.new() # Combat stream; retained public name for QA.
 var spawn_rng = RandomNumberGenerator.new()
@@ -180,6 +185,11 @@ func reset(new_hero: String, new_seed: int = 12345):
 	_reset_defenders()
 	_reset_allies()
 	special_event = {}
+	wave_modifier = ""
+	wave_reinforcement_timer = 0.0
+	wave_reinforcement_count = 0
+	endless_active = false
+	endless_best_wave = 0
 	announce("Choose your gear. The first wave starts when you are ready.")
 
 func recalculate_stats():
@@ -287,13 +297,14 @@ func start_next_wave() -> bool:
 	if phase != "Preparation": return false
 	save_checkpoint()
 	wave = completed_wave+1
-	if wave > 15: return false
+	if wave > 50: return false
 	phase = "Combat"
 	_prepare_hunt()
 	# Special event after wave 3 and 7
 	if completed_wave in [3,7] and not special_event.get("active",false):
 		_trigger_special_event()
 	var w = data.waves[wave-1]
+	wave_modifier = str(w.get("modifier",""))
 	spawn_queue = []
 	var explicit_counts: bool = ruleset=="fast" and tempo.has("wave_counts")
 	var counts: Dictionary = tempo.wave_counts[wave-1] if explicit_counts else w.solo_counts
@@ -320,8 +331,44 @@ func start_next_wave() -> bool:
 				spawn_queue[i] = "elite"
 	# register elite in enemy_types for rendering
 	announce("WAVE %d  •  %d invaders incoming" % [wave,spawn_queue.size()+enemies.size()])
-	log_event("wave_start",{"wave":wave,"base_hp":base_hp})
+	# Apply wave modifiers
+	wave_reinforcement_timer = 0.0
+	wave_reinforcement_count = 0
+	if wave_modifier == "elite_rush":
+		var elite_count = 0
+		for i in range(spawn_queue.size()):
+			if spawn_queue[i] == "crawler" and elite_count < 4:
+				spawn_queue[i] = "elite"
+				elite_count += 1
+		if elite_count > 0:
+			announce("ELITE RUSH  •  %d elites incoming!" % elite_count)
+	elif wave_modifier == "healer_wave":
+		for i in 3: spawn_queue.append("healer")
+		announce("HEALER WAVE  •  Enemy healers deployed!")
+	elif wave_modifier == "siege_priority":
+		var siege_count = 0
+		for i in range(spawn_queue.size()):
+			if spawn_queue[i] == "crawler" and siege_count < 2:
+				spawn_queue[i] = "siege"
+				siege_count += 1
+		if siege_count > 0:
+			announce("SIEGE PRIORITY  •  %d siege units incoming!" % siege_count)
+	log_event("wave_start",{"wave":wave,"base_hp":base_hp,"modifier":wave_modifier})
 	return true
+
+func _step_wave_reinforcements(dt: float) -> void:
+	if phase != "Combat" or wave_modifier == "": return
+	if wave_modifier == "elite_rush" or wave_modifier == "siege_priority":
+		wave_reinforcement_timer -= dt
+		if wave_reinforcement_timer <= 0 and wave_reinforcement_count < 2:
+			wave_reinforcement_timer = 12.0
+			wave_reinforcement_count += 1
+			var kind = "elite" if wave_modifier == "elite_rush" else "siege"
+			spawn_enemy(kind, _spawn_position(), false)
+			announce("Reinforcement incoming!")
+		if spawn_queue.is_empty() and enemies.size() == 0:
+			wave_reinforcement_timer = 0.0
+			wave_reinforcement_count = 0
 
 func _spawn_position() -> Vector2:
 	var roll: float = spawn_rng.randf()
@@ -450,6 +497,7 @@ func step(dt: float, movement: Vector2 = Vector2.ZERO):
 	if phase == "Combat" and metrics.total_kills >= 2000 and not special_event.get("arena_active",false):
 		_trigger_kill_arena()
 	if phase == "SpecialEvent": _step_special_event(dt)
+	_step_wave_reinforcements(dt)
 	_step_hunt_clock(dt)
 	_step_defenders(dt)
 	_step_allies(dt)
